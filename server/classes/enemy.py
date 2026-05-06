@@ -45,6 +45,9 @@ class Enemy(BaseModel):
 
         self.current_hp = self.current_hp - actual_damage
 
+        if(self.current_hp < 0):
+            self.current_hp = 0
+
         return actual_damage
     
     def deal_damage(self) -> int:
