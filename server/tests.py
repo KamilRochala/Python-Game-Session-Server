@@ -1,6 +1,9 @@
 import unittest
 
 from classes.enemy import Enemy
+from classes.item import Item
+from classes.weapon import Weapon, WeaponType
+
 
 class TestEnemy(unittest.TestCase):
 
@@ -50,6 +53,69 @@ class TestEnemy(unittest.TestCase):
         """Test that dead enemy deals 0 damage."""
         self.enemy.current_hp = 0
         self.assertEqual(self.enemy.deal_damage(), 0)
+
+class TestWeapon(unittest.TestCase):
+
+    def setUp(self):
+        """Create a test weapon before each test."""
+        self.weapon = Weapon(
+            name="Sword",
+            sprite_path="sword.png",
+            floor_multiplier=1,
+            damage=10,
+            healing_capacity=0,
+            weapon_type=WeaponType.KNIGHT,
+        )
+
+    # Validator tests
+    def test_valid_weapon_creation(self):
+        self.assertEqual(self.weapon.damage, 10)
+        self.assertEqual(self.weapon.healing_capacity, 0)
+        self.assertEqual(self.weapon.weapon_type, WeaponType.KNIGHT)
+
+    def test_damage_must_be_positive(self):
+        with self.assertRaises(ValueError):
+            Weapon(
+                name="Bad",
+                sprite_path="bad.png",
+                floor_multiplier=1,
+                damage=0,
+                healing_capacity=0,
+                weapon_type=WeaponType.KNIGHT,
+            )
+
+    def test_healing_capacity_only_for_cleric(self):
+        with self.assertRaises(ValueError):
+            Weapon(
+                name="BadHeal",
+                sprite_path="bad.png",
+                floor_multiplier=1,
+                damage=10,
+                healing_capacity=5,
+                weapon_type=WeaponType.KNIGHT,
+            )
+
+    def test_healing_capacity_cannot_be_negative(self):
+        with self.assertRaises(ValueError):
+            Weapon(
+                name="NegHeal",
+                sprite_path="neg.png",
+                floor_multiplier=1,
+                damage=10,
+                healing_capacity=-1,
+                weapon_type=WeaponType.CLERIC,
+            )
+
+    def test_cleric_weapon_allows_healing(self):
+        wand = Weapon(
+            name="Wand",
+            sprite_path="wand.png",
+            floor_multiplier=1,
+            damage=5,
+            healing_capacity=3,
+            weapon_type=WeaponType.CLERIC,
+        )
+        self.assertEqual(wand.healing_capacity, 3)
 
 if __name__ == '__main__':
     unittest.main()
