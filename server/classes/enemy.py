@@ -1,7 +1,8 @@
 import random
 
 from pydantic import (
-    BaseModel
+    BaseModel,
+    field_validator
 )
 
 class Enemy(BaseModel):
@@ -10,6 +11,29 @@ class Enemy(BaseModel):
     room_number: int
     damage: float
     armour: int
+
+    @field_validator('max_hp')
+    @classmethod
+    def validate_max_hp(cls, v):
+        if v <= 0:
+            raise ValueError('max_hp must be greater than 0')
+        return v
+    
+    @field_validator('damage')
+    @classmethod
+    def validate_damage(cls, v):
+        if v <= 0:
+            raise ValueError('damage must be greater than 0')
+        return v
+        
+    @field_validator('current_hp')
+    @classmethod
+    def validate_current_hp(cls, v, info):
+        """Ensure current HP doesn't exceed max HP."""
+        max_hp = info.data.get('max_hp')
+        if max_hp and v > max_hp:
+            raise ValueError('current_hp cannot exceed max_hp')
+        return v
 
     def take_damage(self, incoming_damage: int) -> int:
         """
