@@ -27,21 +27,21 @@ class Player(BaseModel):
 
     # Stats
     base_max_health: float # This is before stat modifiers
-    max_health: float
-    current_health: float
+    max_health: float = 0
+    current_health: float = 0
     base_damage: float # This is before stat modifiers
-    damage: float # This is after stat modifiers
+    damage: float = 0 # This is after stat modifiers
     base_healing_capacity: float # This is before stat modifiers
-    healing_capacity: float
+    healing_capacity: float = 0
     base_defence: float
-    defence: float
+    defence: float = 0
 
     # Items
-    weapon_slot: Weapon
-    armour_slot: Armour
-    accessory_slot_1: Accessory
-    accessory_slot_2: Accessory
-    accessory_slot_3: Accessory
+    weapon_slot: Weapon | None = None # Allow none in pydantic validation
+    armour_slot: Armour | None = None
+    accessory_slot_1: Accessory | None = None
+    accessory_slot_2: Accessory | None = None
+    accessory_slot_3: Accessory | None = None
 
     # Validators
 
@@ -101,10 +101,15 @@ class Player(BaseModel):
         return v
 
     # Model validator
+
     @model_validator(mode='after')
-    def validate_stats_with_accessories(self):
-        """Calculate final stats based on accessories and equipment."""
+    def validate_stats(self):
         
+        object.__setattr__(self, 'max_health', self.base_max_health)
+        object.__setattr__(self, 'damage', self.base_damage)
+        object.__setattr__(self, 'defence', self.base_damage)
+        object.__setattr__(self, 'healing_capacity', self.base_healing_capacity)
+        object.__setattr__(self, 'current_health', self.base_max_health)
         # Calculate multipliers from accessories
         damage_multipliers = 1.0
         health_multipliers = 1.0
@@ -124,15 +129,15 @@ class Player(BaseModel):
             elif accessory_slot.what_stat_is_multiplied == Stat.HEALING_CAPACITY:
                 healing_multipliers *= multiplier
             elif accessory_slot.what_stat_is_multiplied == Stat.DEFENCE:
-                if self.defence == self.base_defence:
-                    object.__setattr__(self, 'defence', float(self.base_defence + accessory_slot.stat_multiplier))
-                else:
-                    object.__setattr__(self, 'defence', float(self.defence + accessory_slot.stat_multiplier))
+                current_def = self.defence if self.defence is not None else self.base_defence
+                object.__setattr__(self, 'defence', float(current_def + accessory_slot.stat_multiplier))
 
-        
+        # If no weapon is equiped
+        extra_dmg = self.weapon_slot.damage if self.weapon_slot else 0
         # Apply multipliers to final stats (bypass pydantic assignment hooks)
-        object.__setattr__(self, 'damage', float((self.base_damage + self.weapon_slot.damage) * damage_multipliers))
+        object.__setattr__(self, 'damage', float((self.base_damage + extra_dmg  ) * damage_multipliers))
         object.__setattr__(self, 'max_health', float(self.base_max_health * health_multipliers))
         object.__setattr__(self, 'healing_capacity', float(self.base_healing_capacity * healing_multipliers))
 
         return self
+    

@@ -10,6 +10,7 @@ from typing import List, Dict, Any
 from classes.weapon import Weapon, WeaponType
 from classes.armour import Armour
 from classes.accessory import Accessory, Stat
+from classes.player import Player
 
 load_dotenv()
 
@@ -56,7 +57,7 @@ def generate_reward(current_floor: int, is_healer: bool):
             sprite_path="res://sprites/armours/.png",
             floor_multiplier=current_floor,
             defence_ammount=random.randint(1, 10),
-            max_health_increase=random.randint(0, 20)
+            max_health_increase=random.randint(5, 20)
         )
         return item, "armour"
 
@@ -98,6 +99,41 @@ def get_match(player_id: int):
             raise HTTPException(status_code=404, detail="Player not found")
             
         return match
+    finally:
+        cur.close()
+        conn.close()
+
+@app.post("/addPlayer")
+def add_player(player: Player):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        params = {
+            "name": player.player_name,
+            "class": player.player_class,
+            "max_health": player.base_max_health,
+            "damage": player.base_damage,
+            "healing_capacity": player.base_healing_capacity,
+            "defence": player.base_defence
+        }
+
+        query_add_player = """
+        INSERT INTO public.players(
+        player_name, player_class, base_max_health, base_damage, base_healing_capacity, base_defence)
+        VALUES (%(name)s, %(class)s, %(max_health)s ,%(damage)s , %(healing_capacity)s, %(defence)s) RETURNING *;
+        """
+
+        cur.execute(query_add_player, params)
+        player_table = cur.fetchone()
+
+        if not player_table:
+            raise HTTPException(status_code=404, detail="Player not found")
+        
+        conn.commit()
+            
+        return player_table
+
     finally:
         cur.close()
         conn.close()
