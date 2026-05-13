@@ -11,8 +11,8 @@ class WeaponType(str, Enum):
     CLERIC = "cleric"
 
 class Weapon(Item):
-    damage: int
-    healing_capacity: int
+    damage: float
+    healing_capacity: float
     weapon_type: WeaponType
 
     @field_validator('damage')
