@@ -20,7 +20,6 @@ class TestPlayer(unittest.TestCase):
         self.weapon = Weapon(
             name="Sword",
             sprite_path="sword.png",
-            floor_multiplier=1,
             damage=5,
             healing_capacity=0,
             weapon_type=WeaponType.KNIGHT,
@@ -28,21 +27,18 @@ class TestPlayer(unittest.TestCase):
         self.armour = Armour(
             name="Plate",
             sprite_path="plate.png",
-            floor_multiplier=1,
             defence_ammount=2,
             max_health_increase=10,
         )
         self.acc_dmg = Accessory(
             name="DmgRing",
             sprite_path="ring.png",
-            floor_multiplier=1,
             what_stat_is_multiplied=Stat.DAMAGE,
             stat_multiplier=1.5,
         )
         self.acc_none = Accessory(
             name="Noop",
             sprite_path="noop.png",
-            floor_multiplier=1,
             what_stat_is_multiplied=Stat.DEFENCE,
             stat_multiplier=1.0,
         )
@@ -155,7 +151,6 @@ class TestWeapon(unittest.TestCase):
         self.weapon = Weapon(
             name="Sword",
             sprite_path="sword.png",
-            floor_multiplier=1,
             damage=10,
             healing_capacity=0,
             weapon_type=WeaponType.KNIGHT,
@@ -172,7 +167,6 @@ class TestWeapon(unittest.TestCase):
             Weapon(
                 name="Bad",
                 sprite_path="bad.png",
-                floor_multiplier=1,
                 damage=0,
                 healing_capacity=0,
                 weapon_type=WeaponType.KNIGHT,
@@ -183,7 +177,6 @@ class TestWeapon(unittest.TestCase):
             Weapon(
                 name="BadHeal",
                 sprite_path="bad.png",
-                floor_multiplier=1,
                 damage=10,
                 healing_capacity=5,
                 weapon_type=WeaponType.KNIGHT,
@@ -194,7 +187,6 @@ class TestWeapon(unittest.TestCase):
             Weapon(
                 name="NegHeal",
                 sprite_path="neg.png",
-                floor_multiplier=1,
                 damage=10,
                 healing_capacity=-1,
                 weapon_type=WeaponType.CLERIC,
@@ -204,7 +196,6 @@ class TestWeapon(unittest.TestCase):
         wand = Weapon(
             name="Wand",
             sprite_path="wand.png",
-            floor_multiplier=1,
             damage=5,
             healing_capacity=3,
             weapon_type=WeaponType.CLERIC,

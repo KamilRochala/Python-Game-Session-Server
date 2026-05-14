@@ -10,6 +10,7 @@ from typing import List, Dict, Any
 from classes.weapon import Weapon, WeaponType
 from classes.armour import Armour
 from classes.accessory import Accessory, Stat
+from classes.player import Player
 
 load_dotenv()
 
@@ -30,20 +31,20 @@ def generate_reward(current_floor: int, is_healer: bool):
         random_mod = random.choice(modifier_name)
         
         if is_healer:
+            name = random.choice(healer_name)
             item = Weapon(
-                name=f"{random_mod} {random.choice(healer_name)}",
-                sprite_path="res://sprites/weapons/.png",
-                floor_multiplier=current_floor,
-                damage=random.randint(1, 5),
+                name=f"{random_mod} {name}",
+                sprite_path=f"res://sprites/weapons/{name}.png",
+                damage=random.randint(1, 5) * (current_floor * 0.1),
                 healing_capacity=random.randint(5, 12),
                 weapon_type=WeaponType.CLERIC
             )
         else:
+            name = random.choice(weapon_name)
             item = Weapon(
-                name=f"{random_mod} {random.choice(weapon_name)}",
-                sprite_path="res://sprites/weapons/.png",
-                floor_multiplier=current_floor,
-                damage=random.randint(5, 15),
+                name=f"{random_mod} {name}",
+                sprite_path=f"res://sprites/weapons/{name}.png",
+                damage=random.randint(5, 15) * (current_floor * 0.1),
                 healing_capacity=0,
                 weapon_type=WeaponType.KNIGHT
             )
@@ -51,12 +52,12 @@ def generate_reward(current_floor: int, is_healer: bool):
 
     elif reward_type == "armour":
         armour_names = ["Chestplate", "Chainmail", "Robes", "Tunic"]
+        name = random.choice(armour_names)
         item = Armour(
-            name=f"{random.choice(modifier_name)} {random.choice(armour_names)}",
-            sprite_path="res://sprites/armours/.png",
-            floor_multiplier=current_floor,
-            defence_ammount=random.randint(1, 10),
-            max_health_increase=random.randint(0, 20)
+            name=f"{random.choice(modifier_name)} {name}",
+            sprite_path=f"res://sprites/armours/{name}.png",
+            defence_ammount=random.randint(1, 10) * (current_floor * 0.1),
+            max_health_increase=random.randint(5, 20) * (current_floor * 0.1)
         )
         return item, "armour"
 
@@ -65,7 +66,6 @@ def generate_reward(current_floor: int, is_healer: bool):
         item = Accessory(
             name=f"{random.choice(modifier_name)} {random.choice(acc_names)}",
             sprite_path="res://sprites/accessories/.png",
-            floor_multiplier=current_floor,
             what_stat_is_multiplied=random.choice(list(Stat)),
             stat_multiplier=round(random.uniform(1.05, 1.5), 2)
         )
@@ -101,6 +101,43 @@ def get_match(player_id: int):
     finally:
         cur.close()
         conn.close()
+
+@app.post("/addPlayer")
+def add_player(player: Player):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        params = {
+            "name": player.player_name,
+            "class": player.player_class,
+            "max_health": player.base_max_health,
+            "damage": player.base_damage,
+            "healing_capacity": player.base_healing_capacity,
+            "defence": player.base_defence
+        }
+
+        query_add_player = """
+        INSERT INTO public.players(
+        player_name, player_class, base_max_health, base_damage, base_healing_capacity, base_defence)
+        VALUES (%(name)s, %(class)s, %(max_health)s ,%(damage)s , %(healing_capacity)s, %(defence)s) RETURNING *;
+        """
+
+        cur.execute(query_add_player, params)
+        player_table = cur.fetchone()
+
+        if not player_table:
+            raise HTTPException(status_code=404, detail="Player not found")
+        
+        conn.commit()
+            
+        return player_table
+
+    finally:
+        cur.close()
+        conn.close()
+
+#@app.
 
 @app.get("/rewardChoices/{player_id}")
 def get_reward_choices(player_id: int):
@@ -141,23 +178,23 @@ def get_reward_choices(player_id: int):
             if i_type == "weapon":
                 cur.execute("""
                 INSERT INTO pending_reward_choices 
-                (player_id, choice_index, item_type, name, sprite_path, floor_multiplier, damage, healing_capacity, weapon_class)
+                (player_id, choice_index, item_type, name, sprite_path, damage, healing_capacity, weapon_class)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (player_id, i, i_type, item.name, item.sprite_path, item.floor_multiplier, item.damage, item.healing_capacity, item.weapon_type.value))
+                """, (player_id, i, i_type, item.name, item.sprite_path, item.damage, item.healing_capacity, item.weapon_type.value))
                 
             elif i_type == "armour":
                 cur.execute("""
                 INSERT INTO pending_reward_choices 
-                (player_id, choice_index, item_type, name, sprite_path, floor_multiplier, defence_amount, max_health_increase)
+                (player_id, choice_index, item_type, name, sprite_path, defence_amount, max_health_increase)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (player_id, i, i_type, item.name, item.sprite_path, item.floor_multiplier, item.defence_ammount, item.max_health_increase))
+                """, (player_id, i, i_type, item.name, item.sprite_path,item.defence_ammount, item.max_health_increase))
                 
             elif i_type == "accessory":
                 cur.execute("""
                 INSERT INTO pending_reward_choices 
-                (player_id, choice_index, item_type, name, sprite_path, floor_multiplier, stat_to_multiply, stat_multiplier)
+                (player_id, choice_index, item_type, name, sprite_path, stat_to_multiply, stat_multiplier)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (player_id, i, i_type, item.name, item.sprite_path, item.floor_multiplier, item.what_stat_is_multiplied.value, item.stat_multiplier))
+                """, (player_id, i, i_type, item.name, item.sprite_path, item.what_stat_is_multiplied.value, item.stat_multiplier))
 
             choices_response.append({
                 "choice_index": i,
