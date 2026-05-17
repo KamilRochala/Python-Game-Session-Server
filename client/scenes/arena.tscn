@@ -1,0 +1,356 @@
+[gd_scene format=3 uid="uid://dab4s188j85fy"]
+
+[ext_resource type="Theme" uid="uid://gp6vxgd3vyl7" path="res://assets/themes/mainTheme.tres" id="1_olpmc"]
+[ext_resource type="Texture2D" uid="uid://twx1e1w0qqpo" path="res://assets/ui/fight-background.png" id="2_xdvfk"]
+[ext_resource type="Texture2D" uid="uid://dntix4cc5gadw" path="res://assets/ui/background.png" id="3_7ft05"]
+[ext_resource type="Texture2D" uid="uid://dlhvue0kljgn1" path="res://assets/ui/knight-back.png" id="3_xdvfk"]
+[ext_resource type="Script" uid="uid://b8p178hq13wks" path="res://scripts/arena.gd" id="arena_script"]
+
+[node name="Arena" type="Control" unique_id=1192074160]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_olpmc")
+script = ExtResource("arena_script")
+
+[node name="GridContainer" type="GridContainer" parent="." unique_id=581205719]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+columns = 2
+
+[node name="TextureRect" type="TextureRect" parent="GridContainer" unique_id=825614439]
+custom_minimum_size = Vector2(700, 400)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+texture = ExtResource("2_xdvfk")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Enemies" type="HBoxContainer" parent="GridContainer/TextureRect" unique_id=2023652414]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+alignment = 1
+
+[node name="Enemy_1" type="VBoxContainer" parent="GridContainer/TextureRect/Enemies" unique_id=1722532789]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 8
+alignment = 1
+
+[node name="Health" type="Label" parent="GridContainer/TextureRect/Enemies/Enemy_1" unique_id=721927899]
+layout_mode = 2
+text = "6/7"
+
+[node name="EnemySprite" type="TextureRect" parent="GridContainer/TextureRect/Enemies/Enemy_1" unique_id=1836803631]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AttackBtn" type="Button" parent="GridContainer/TextureRect/Enemies/Enemy_1" unique_id=731538758]
+layout_mode = 2
+text = "Attack"
+
+[node name="Enemy_2" type="VBoxContainer" parent="GridContainer/TextureRect/Enemies" unique_id=237841069]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 8
+alignment = 1
+
+[node name="Health" type="Label" parent="GridContainer/TextureRect/Enemies/Enemy_2" unique_id=1324601649]
+layout_mode = 2
+text = "6/7"
+
+[node name="EnemySprite" type="TextureRect" parent="GridContainer/TextureRect/Enemies/Enemy_2" unique_id=254729125]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AttackBtn" type="Button" parent="GridContainer/TextureRect/Enemies/Enemy_2" unique_id=1324112694]
+layout_mode = 2
+text = "Attack"
+
+[node name="Enemy_3" type="VBoxContainer" parent="GridContainer/TextureRect/Enemies" unique_id=109961102]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 8
+alignment = 1
+
+[node name="Health" type="Label" parent="GridContainer/TextureRect/Enemies/Enemy_3" unique_id=1878164340]
+layout_mode = 2
+text = "6/7"
+
+[node name="EnemySprite" type="TextureRect" parent="GridContainer/TextureRect/Enemies/Enemy_3" unique_id=76968769]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AttackBtn" type="Button" parent="GridContainer/TextureRect/Enemies/Enemy_3" unique_id=1394098202]
+layout_mode = 2
+text = "Attack"
+
+[node name="Enemy_4" type="VBoxContainer" parent="GridContainer/TextureRect/Enemies" unique_id=2117656414]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 8
+alignment = 1
+
+[node name="Health" type="Label" parent="GridContainer/TextureRect/Enemies/Enemy_4" unique_id=1156861099]
+layout_mode = 2
+text = "6/7"
+
+[node name="EnemySprite" type="TextureRect" parent="GridContainer/TextureRect/Enemies/Enemy_4" unique_id=1342358427]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AttackBtn" type="Button" parent="GridContainer/TextureRect/Enemies/Enemy_4" unique_id=1184015205]
+layout_mode = 2
+text = "Attack"
+
+[node name="Enemy_5" type="VBoxContainer" parent="GridContainer/TextureRect/Enemies" unique_id=1113777483]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 8
+alignment = 1
+
+[node name="Health" type="Label" parent="GridContainer/TextureRect/Enemies/Enemy_5" unique_id=1305237870]
+layout_mode = 2
+text = "6/7"
+
+[node name="EnemySprite" type="TextureRect" parent="GridContainer/TextureRect/Enemies/Enemy_5" unique_id=980238131]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AttackBtn" type="Button" parent="GridContainer/TextureRect/Enemies/Enemy_5" unique_id=562241598]
+layout_mode = 2
+text = "Attack"
+
+[node name="ItemsPanel" type="PanelContainer" parent="GridContainer" unique_id=673275036]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Label" type="Label" parent="GridContainer/ItemsPanel" unique_id=1248468837]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
+text = "ITEMS"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GridContainer/ItemsPanel" unique_id=480349372]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="Items" type="GridContainer" parent="GridContainer/ItemsPanel/VBoxContainer" unique_id=234308747]
+layout_mode = 2
+columns = 3
+
+[node name="Weapon" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=1105954806]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Weapon" unique_id=501860675]
+layout_mode = 2
+
+[node name="Armour" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=236575629]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Armour" unique_id=770815031]
+layout_mode = 2
+
+[node name="Accessory1" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=489245505]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory1" unique_id=473515211]
+layout_mode = 2
+
+[node name="Accessory2" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=1976629846]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory2" unique_id=1888677523]
+layout_mode = 2
+
+[node name="Accessory3" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=145655654]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory3" unique_id=1452930749]
+layout_mode = 2
+
+[node name="Players" type="PanelContainer" parent="GridContainer" unique_id=1603540377]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="GridContainer/Players" unique_id=902907004]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+
+[node name="Player_1" type="VBoxContainer" parent="GridContainer/Players/HBoxContainer" unique_id=703011233]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+alignment = 1
+
+[node name="PlayerName" type="Label" parent="GridContainer/Players/HBoxContainer/Player_1" unique_id=1899890518]
+layout_mode = 2
+
+[node name="Health" type="Label" parent="GridContainer/Players/HBoxContainer/Player_1" unique_id=1548283914]
+layout_mode = 2
+
+[node name="PlayerSprite" type="TextureRect" parent="GridContainer/Players/HBoxContainer/Player_1" unique_id=1859449369]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+texture = ExtResource("3_xdvfk")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HealBtn" type="Button" parent="GridContainer/Players/HBoxContainer/Player_1" unique_id=2019625040]
+z_index = 1
+layout_mode = 2
+text = "Heal"
+
+[node name="Player_2" type="VBoxContainer" parent="GridContainer/Players/HBoxContainer" unique_id=102028926]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+alignment = 1
+
+[node name="PlayerName" type="Label" parent="GridContainer/Players/HBoxContainer/Player_2" unique_id=1316311344]
+layout_mode = 2
+
+[node name="Health" type="Label" parent="GridContainer/Players/HBoxContainer/Player_2" unique_id=492099720]
+layout_mode = 2
+
+[node name="PlayerSprite" type="TextureRect" parent="GridContainer/Players/HBoxContainer/Player_2" unique_id=840316658]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+texture = ExtResource("3_xdvfk")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HealBtn" type="Button" parent="GridContainer/Players/HBoxContainer/Player_2" unique_id=814803004]
+z_index = 1
+layout_mode = 2
+text = "Heal"
+
+[node name="Player_3" type="VBoxContainer" parent="GridContainer/Players/HBoxContainer" unique_id=1589884813]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+alignment = 1
+
+[node name="PlayerName" type="Label" parent="GridContainer/Players/HBoxContainer/Player_3" unique_id=2071051974]
+layout_mode = 2
+
+[node name="Health" type="Label" parent="GridContainer/Players/HBoxContainer/Player_3" unique_id=228323700]
+layout_mode = 2
+
+[node name="PlayerSprite" type="TextureRect" parent="GridContainer/Players/HBoxContainer/Player_3" unique_id=1237612065]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+texture = ExtResource("3_xdvfk")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HealBtn" type="Button" parent="GridContainer/Players/HBoxContainer/Player_3" unique_id=59369655]
+z_index = 1
+layout_mode = 2
+text = "Heal"
+
+[node name="Player_4" type="VBoxContainer" parent="GridContainer/Players/HBoxContainer" unique_id=1714803217]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+alignment = 1
+
+[node name="PlayerName" type="Label" parent="GridContainer/Players/HBoxContainer/Player_4" unique_id=1515513606]
+layout_mode = 2
+
+[node name="Health" type="Label" parent="GridContainer/Players/HBoxContainer/Player_4" unique_id=1260251885]
+layout_mode = 2
+
+[node name="PlayerSprite" type="TextureRect" parent="GridContainer/Players/HBoxContainer/Player_4" unique_id=1934311008]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+texture = ExtResource("3_xdvfk")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HealBtn" type="Button" parent="GridContainer/Players/HBoxContainer/Player_4" unique_id=1307982097]
+z_index = 1
+layout_mode = 2
+text = "Heal"
+
+[node name="StatsPanel" type="PanelContainer" parent="GridContainer" unique_id=1401592590]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="GridContainer/StatsPanel" unique_id=1702202063]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
+text = "STATS"
+
+[node name="Stats" type="VBoxContainer" parent="GridContainer/StatsPanel" unique_id=720544022]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="TurnNotice" type="Label" parent="GridContainer/StatsPanel/Stats" unique_id=422767401]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Your turn"
+
+[node name="CurrentHp" type="Label" parent="GridContainer/StatsPanel/Stats" unique_id=953572089]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Health:"
+
+[node name="Damage" type="Label" parent="GridContainer/StatsPanel/Stats" unique_id=1657697767]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Damage:"
+
+[node name="HealingCapacity" type="Label" parent="GridContainer/StatsPanel/Stats" unique_id=563300030]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Healing Capacity: "
+
+[node name="Defence" type="Label" parent="GridContainer/StatsPanel/Stats" unique_id=594448002]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Defence: "
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1459290810]
+z_index = -1
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_7ft05")
+stretch_mode = 1

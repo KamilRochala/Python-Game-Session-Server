@@ -2,13 +2,13 @@
 
 [ext_resource type="Script" uid="uid://duxf5ogx83v5g" path="res://scripts/main_menu.gd" id="1_l6cm7"]
 [ext_resource type="Theme" uid="uid://gp6vxgd3vyl7" path="res://assets/themes/mainTheme.tres" id="2_8ln24"]
-[ext_resource type="Texture2D" uid="uid://ch3adkcfvjm5j" path="res://assets/ui/temp.png" id="2_ekxnf"]
 [ext_resource type="Texture2D" uid="uid://dntix4cc5gadw" path="res://assets/ui/background.png" id="2_rtw2f"]
 [ext_resource type="Texture2D" uid="uid://sg0vkgu3p8r" path="res://assets/ui/text_box.png" id="2_wu84c"]
 [ext_resource type="FontFile" uid="uid://dykhg40beqfhv" path="res://assets/fonts/dpcomic.ttf" id="3_8ln24"]
 [ext_resource type="Texture2D" uid="uid://cim08ds7dh37m" path="res://assets/ui/minus-button.png" id="6_5dd4i"]
 [ext_resource type="Texture2D" uid="uid://cacbt5fajtqs6" path="res://assets/ui/minus-button-pressed.png" id="7_lgwnu"]
 [ext_resource type="Texture2D" uid="uid://btgvbw0ybs1ex" path="res://assets/ui/plus-button.png" id="8_flqon"]
+[ext_resource type="Texture2D" uid="uid://ptjvve2iy01b" path="res://assets/ui/knight.png" id="9_5dd4i"]
 [ext_resource type="Texture2D" uid="uid://jg4sgkxcpc7m" path="res://assets/ui/plus-button-pressed.png" id="9_rcqid"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_jk1qb"]
@@ -173,16 +173,28 @@ size_flags_horizontal = 0
 text = "<"
 
 [node name="ClassPortrait" type="TextureRect" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/ClassSelectorRow" unique_id=57019239]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
 size_flags_horizontal = 3
-texture = ExtResource("2_ekxnf")
+texture = ExtResource("9_5dd4i")
 
 [node name="NextClassBtn" type="Button" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/ClassSelectorRow" unique_id=825275757]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 text = ">"
+
+[node name="ClassDescription" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn" unique_id=455321312]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "Deals big damage and wields blunt weapons"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
 
 [node name="RightCollumnContainer" type="PanelContainer" parent="MarginContainer/ColumnsContainer" unique_id=1776588546]
 layout_mode = 2

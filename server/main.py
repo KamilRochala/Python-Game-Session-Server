@@ -89,13 +89,75 @@ def generate_enemies(current_floor: int, player_name: str):
             max_hp=random.randint(15, 25) * multiplier, 
             damage=random.randint(5,10) * multiplier, 
             armour=random.randint(2,4) * multiplier, 
-            name="Ebstein" if player_name == "Ebstein" else random.choice(enemy_types)
+            name="Trywialne" if player_name == "Trivial" else random.choice(enemy_types)
         )
         list_of_enemies.append(temp_enemy)
         
     return list_of_enemies
 
+def advance_turn_system(match_id: int, cur):
+    """
+    Moves the turn index forward. If the next slot belongs to an enemy, 
+    the enemy executes an attack instantly, and the loop continues 
+    until it lands on a valid player's turn.
+    """
+    # 1. Fetch current match state
+    cur.execute("SELECT * FROM matches WHERE id = %s", (match_id,))
+    match = cur.fetchone()
+    if not match:
+        return
 
+    # 2. Build the turn order list of living/valid entities
+    # Players first, then enemies
+    players = [match["player_1_id"], match["player_2_id"], match["player_3_id"], match["player_4_id"]]
+    active_player_ids = [pid for pid in players if pid is not None]
+    
+    enemy_ids = match.get("enemy_ids", [])
+    
+    # Filter out dead enemies
+    living_enemy_ids = []
+    if enemy_ids:
+        cur.execute("SELECT id FROM enemies WHERE id = ANY(%s) AND current_hp > 0", (enemy_ids,))
+        living_enemy_ids = [row["id"] for row in cur.fetchall()]
+
+    # If all enemies are dead, combat is over!
+    if not living_enemy_ids:
+        return
+
+    # Total combatants order array
+    combat_order = active_player_ids + living_enemy_ids
+    
+    # Calculate next index position safely loop-wrapped
+    current_index = match.get("turn_index", 0)
+    next_index = (current_index + 1) % len(combat_order)
+    
+    # Update match with next index temporarily to prevent race conditions
+    cur.execute("UPDATE matches SET turn_index = %s WHERE id = %s", (next_index, match_id))
+    current_turn_entity = combat_order[next_index]
+
+    # 3. If the current entity is an ENEMY, automate its attack turn!
+    if current_turn_entity in living_enemy_ids:
+        # Fetch enemy attack power
+        cur.execute("SELECT name, damage FROM enemies WHERE id = %s", (current_turn_entity,))
+        enemy = cur.fetchone()
+        
+        if enemy:
+            # Pick a random player to target
+            target_player_id = random.choice(active_player_ids)
+            
+            # Fetch target player current health
+            cur.execute("SELECT current_health, player_name FROM players WHERE id = %s", (target_player_id,))
+            player_row = cur.fetchone()
+            
+            if player_row:
+                new_hp = max(0.0, float(player_row["current_health"] or 0) - float(enemy["damage"]))
+                
+                # Deal damage to player row
+                cur.execute("UPDATE players SET current_health = %s WHERE id = %s", (new_hp, target_player_id))
+                print(f"Enemy {enemy['name']} auto-attacked {player_row['player_name']} for {enemy['damage']} DMG.")
+        
+        # Recurse: Move to the next turn automatically!
+        advance_turn_system(match_id, cur)
 
 
 
@@ -138,17 +200,23 @@ def add_player(player: Player):
     try:
         params = {
             "name": player.player_name,
-            "class": player.player_class,
-            "max_health": player.base_max_health,
-            "damage": player.base_damage,
-            "healing_capacity": player.base_healing_capacity,
-            "defence": player.base_defence
+            "class": player.player_class.value,
+            "base_max_health": player.base_max_health,
+            "base_damage": player.base_damage,
+            "base_healing_capacity": player.base_healing_capacity,
+            "base_defence": player.base_defence,
+
+            "max_health": player.max_health,
+            "damage": player.damage,
+            "healing_capacity": player.healing_capacity,
+            "defence": player.defence,
+            "current_health": player.current_health
         }
 
         query_add_player = """
         INSERT INTO public.players(
-        player_name, player_class, base_max_health, base_damage, base_healing_capacity, base_defence)
-        VALUES (%(name)s, %(class)s, %(max_health)s ,%(damage)s , %(healing_capacity)s, %(defence)s) RETURNING *;
+        player_name, player_class, base_max_health, max_health, current_health, base_damage, damage, base_healing_capacity, healing_capacity, base_defence, defence)
+        VALUES (%(name)s, %(class)s, %(base_max_health)s, %(max_health)s, %(current_health)s, %(base_damage)s, %(damage)s, %(base_healing_capacity)s, %(healing_capacity)s, %(base_defence)s, %(defence)s) RETURNING *;
         """
 
         cur.execute(query_add_player, params)
@@ -496,7 +564,7 @@ def create_match(player_id: int):
         match_id = cur.fetchone()["id"]
         conn.commit()
 
-        return {"match_id": match_id, "status": "waiting", "floor_number": 0}
+        return {"id": match_id, "status": "waiting", "floor_number": 0}
 
     except HTTPException:
         conn.rollback()
@@ -522,7 +590,26 @@ def get_matches():
         match = cur.fetchall()
 
         if not match:
-            raise HTTPException(status_code=404, detail="Player not found")
+            # return empty list rather than 404 so clients don't crash
+            return []
+            
+        return match
+    finally:
+        cur.close()
+        conn.close()
+
+@app.get("/getMatch/{match_id}")
+def get_single_match(match_id: int):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        query = "SELECT * FROM matches WHERE id = %s"
+        cur.execute(query, (match_id,))
+        match = cur.fetchone()
+
+        if not match:
+            raise HTTPException(status_code=404, detail="Match not found")
             
         return match
     finally:
@@ -538,74 +625,67 @@ class AttackPayload(BaseModel):
 
 @app.post("/attackEnemy/{match_id}")
 def attack_enemy(match_id: int, payload: AttackPayload = Body(...)):
-    """
-    Processes an attack on an enemy row directly scoped to a unique match_id 
-    inside the main enemies database table.
-    """
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        # 1. Fetch the targeted enemy row. 
-        # Scoping using BOTH parameters ensures Room 1 cannot accidentally alter Room 2's targets.
-        cur.execute(
-            """
-            SELECT id, name, max_hp, current_hp, damage, armour 
-            FROM enemies 
-            WHERE id = %s AND match_id = %s
-            """,
-            (payload.enemy_id, match_id)
-        )
+        # 1. Fetch match to verify whose turn it is
+        cur.execute("SELECT * FROM matches WHERE id = %s", (match_id,))
+        match = cur.fetchone()
+        if not match:
+            raise HTTPException(status_code=404, detail="Match workspace not found")
+
+        # Reconstruct player list
+        players = [match["player_1_id"], match["player_2_id"], match["player_3_id"], match["player_4_id"]]
+        active_player_ids = [pid for pid in players if pid is not None]
+        
+        enemy_ids = match.get("enemy_ids", [])
+        cur.execute("SELECT id FROM enemies WHERE id = ANY(%s) AND current_hp > 0", (enemy_ids,))
+        living_enemy_ids = [row["id"] for row in cur.fetchall()]
+        
+        combat_order = active_player_ids + living_enemy_ids
+        current_turn_index = match.get("turn_index", 0)
+
+        # 2. Safety constraint check: Is it actually a player's turn?
+        if current_turn_index >= len(combat_order):
+            # Reset index if boundaries mutated out of sync
+            cur.execute("UPDATE matches SET turn_index = 0 WHERE id = %s", (match_id,))
+            conn.commit()
+            raise HTTPException(status_code=400, detail="Turn sequence desynchronized. Resetting index, please retry.")
+
+        # 3. Check if the current attacker ID matches the client payload sender
+        # Note: We assume you pass player_id from client to verify, or we derive it
+        # For simplicity, we assume the action comes from whoever's turn it currently is:
+        current_turn_player_id = combat_order[current_turn_index]
+        
+        # If the turn index points to an enemy, a player cannot strike!
+        if current_turn_player_id in living_enemy_ids:
+            raise HTTPException(status_code=400, detail="It is currently the enemy's turn phase!")
+
+        # 4. Process the core player attack execution 
+        cur.execute("SELECT id, name, max_hp, current_hp, damage, armour FROM enemies WHERE id = %s AND match_id = %s", (payload.enemy_id, match_id))
         enemy_row = cur.fetchone()
 
         if not enemy_row:
-            raise HTTPException(
-                status_code=404, 
-                detail="Target enemy variant not found within this specific match workspace"
-            )
+            raise HTTPException(status_code=404, detail="Target enemy variant not found")
 
-        # 2. Instantiate your Pydantic validation wrapper with database row fields
-        enemy_obj = Enemy(
-            max_hp=float(enemy_row["max_hp"]),
-            current_hp=float(enemy_row["current_hp"]),
-            damage=float(enemy_row["damage"]),
-            armour=int(enemy_row["armour"]),
-            name=str(enemy_row["name"])
-        )
-
-        # Quick checkpoint optimization: check if they are already defeated
+        enemy_obj = Enemy(max_hp=float(enemy_row["max_hp"]), current_hp=float(enemy_row["current_hp"]), damage=float(enemy_row["damage"]), armour=int(enemy_row["armour"]), name=str(enemy_row["name"]))
+        
         if enemy_obj.current_hp <= 0:
-            return {
-                "message": f"{enemy_obj.name} is already down!", 
-                "damage_taken": 0, 
-                "current_hp": 0,
-                "is_dead": True
-            }
+            raise HTTPException(status_code=400, detail="Enemy is already defeated!")
 
-        # 3. Fire your built-in damage instance function 
-        # This handles the armor calculations and updates enemy_obj.current_hp safely
         actual_damage_dealt = enemy_obj.take_damage(int(payload.damage_amount))
 
-        # 4. Save the freshly updated health state directly back into the enemies row
-        cur.execute(
-            """
-            UPDATE enemies 
-            SET current_hp = %s 
-            WHERE id = %s AND match_id = %s
-            """,
-            (enemy_obj.current_hp, payload.enemy_id, match_id)
-        )
+        cur.execute("UPDATE enemies SET current_hp = %s WHERE id = %s AND match_id = %s", (enemy_obj.current_hp, payload.enemy_id, match_id))
         
-        # Lock in changes to the database
+        # 5. Player strike resolved successfully! Advance the turn index.
+        advance_turn_system(match_id, cur)
+        
         conn.commit()
-
-        # 5. Inform your Godot game client of the combat resolution details
         return {
             "enemy_name": enemy_obj.name,
-            "damage_attempted": payload.damage_amount,
             "actual_damage_taken": actual_damage_dealt,
-            "current_hp": enemy_obj.current_hp,
-            "is_dead": (enemy_obj.current_hp <= 0)
+            "is_dead": (enemy_obj.current_hp <= 0),
         }
 
     except HTTPException:
@@ -613,9 +693,91 @@ def attack_enemy(match_id: int, payload: AttackPayload = Body(...)):
         raise
     except Exception as e:
         conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+# Schema model mapping for parsing our healing post request body
+class HealPayload(BaseModel):
+    healer_id: int
+    target_player_id: int
+
+@app.post("/healPlayer/{match_id}")
+def heal_player(match_id: int, payload: HealPayload = Body(...)):
+    """
+    Heals a specific target player in a match using the caster's healing capacity.
+    Formula: 20 + healing_capacity * 0.5
+    """
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        # 1. Fetch the healer's profile to obtain their raw metrics
+        cur.execute("SELECT * FROM players WHERE id = %s", (payload.healer_id,))
+        healer_row = cur.fetchone()
+        if not healer_row:
+            raise HTTPException(status_code=404, detail="Healer player profile not found")
+
+        # 2. Fetch the target's current stats
+        cur.execute("SELECT * FROM players WHERE id = %s", (payload.target_player_id,))
+        target_row = cur.fetchone()
+        if not target_row:
+            raise HTTPException(status_code=404, detail="Target player profile not found")
+
+        # Instantiate Pydantic wrapper to evaluate modified stats safely
+        healer_obj = Player(**healer_row)
+        target_obj = Player(**target_row)
+
+        # 3. Apply your custom healing calculation
+        # Equation: 20 + healing_capacity * 0.5
+        heal_amount = 20.0 + (healer_obj.healing_capacity * 0.5)
+
+        # 4. Calculate new health while enforcing max health clamping
+        # (Assuming your DB uses 'current_health', fallback to base health values if tracking is local)
+        current_hp = target_row.get("current_health") if target_row.get("current_health") is not None else target_obj.base_max_health
+        new_hp = min(current_hp + heal_amount, target_obj.max_health)
+
+        # 5. Save the updated health value back into the target's profile
+        cur.execute(
+            """
+            UPDATE players 
+            SET current_health = %s 
+            WHERE id = %s
+            """,
+            (new_hp, payload.target_player_id)
+        )
+        
+        conn.commit()
+
+        return {
+            "status": "success",
+            "heal_calculated": heal_amount,
+            "target_previous_hp": current_hp,
+            "target_new_hp": new_hp,
+            "max_hp_limit": target_obj.max_health
+        }
+
+    except Exception as e:
+        conn.rollback()
         raise HTTPException(status_code=500, detail=f"Database execution error: {str(e)}")
     finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
+        cur.close()
+        conn.close()
+
+@app.get("/enemy/{enemy_id}")
+def get_enemy_details(enemy_id: int):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        cur.execute("SELECT id, name, max_hp, current_hp, damage, armour FROM enemies WHERE id = %s", (enemy_id,))
+        enemy = cur.fetchone()
+
+        if not enemy:
+            raise HTTPException(status_code=404, detail="Enemy variant not found")
+            
+        return enemy
+    finally:
+        cur.close()
+        conn.close()

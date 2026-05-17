@@ -3,9 +3,8 @@ extends Control
 const BASE_URL = "http://127.0.0.1:8000"
 
 # Preloaded placeholder textures (Point these to your temp.png asset path)
-const KNIGHT_SPRITE = preload("res://assets/ui/temp.png")
-const CLERIC_SPRITE = preload("res://assets/ui/temp.png")
-const EMPTY_SPRITE  = preload("res://assets/ui/temp.png") # Blank slot profile template
+const KNIGHT_SPRITE = preload("res://assets/ui/knight.png")
+const CLERIC_SPRITE = preload("res://assets/ui/cleric.png")
 
 @onready var match_title_label: Label = %MatchTitleLabel
 @onready var start_match_btn: Button = %StartMatchBtn
@@ -42,8 +41,8 @@ func _poll_lobby_status() -> void:
 		return
 		
 	var headers = ["Content-Type: application/json"]
-	# We query the server list and parse out our matching room entry
-	var error = lobby_http_request.request(BASE_URL + "/getMatches", headers, HTTPClient.METHOD_GET)
+	# We query the specific match instead of all waiting matches
+	var error = lobby_http_request.request(BASE_URL + "/getMatch/" + str(GlobalVariables.match_id), headers, HTTPClient.METHOD_GET)
 	if error == OK:
 		is_polling = true
 
@@ -56,12 +55,9 @@ func _on_lobby_poll_completed(result: int, response_code: int, headers: PackedSt
 	var json = JSON.new()
 	
 	if json.parse(response_string) == OK:
-		var matches = json.get_data()
-		if typeof(matches) == TYPE_ARRAY:
-			for match_entry in matches:
-				if int(match_entry.get("id")) == GlobalVariables.match_id:
-					_process_lobby_state(match_entry)
-					break
+		var match_data = json.get_data()
+		if typeof(match_data) == TYPE_DICTIONARY:
+			_process_lobby_state(match_data)
 
 func _process_lobby_state(match_data: Dictionary) -> void:
 	# Check if the host has already updated the match state to started
@@ -84,7 +80,8 @@ func _process_lobby_state(match_data: Dictionary) -> void:
 			_update_player_slot_details(int(slot_player_id), i)
 		else:
 			player_names[i].text = "Empty Slot..."
-			player_sprites[i].texture = EMPTY_SPRITE
+			player_sprites[i].texture = null  # Erases the lingering visual right away!
+			
 
 # Fetch dynamic player class choices and character names straight from database profiles
 func _update_player_slot_details(id_to_fetch: int, slot_idx: int) -> void:
@@ -92,6 +89,7 @@ func _update_player_slot_details(id_to_fetch: int, slot_idx: int) -> void:
 	add_child(player_profile_request)
 	
 	player_profile_request.request_completed.connect(func(result, response_code, headers, body):
+		print("Player Profile Request! result: ", result, " code: ", response_code)
 		if response_code == 200:
 			var data_string = body.get_string_from_utf8()
 			var json = JSON.new()
@@ -101,12 +99,16 @@ func _update_player_slot_details(id_to_fetch: int, slot_idx: int) -> void:
 				
 				# Set graphic variants depending on chosen database class string entries
 				var p_class = str(profile.get("player_class", "")).to_lower()
+				print("Player class from DB: ", p_class)
 				if p_class == "knight":
 					player_sprites[slot_idx].texture = KNIGHT_SPRITE
 				elif p_class == "cleric":
 					player_sprites[slot_idx].texture = CLERIC_SPRITE
-				else:
-					player_sprites[slot_idx].texture = EMPTY_SPRITE
+				
+			else:
+				print("Failed to parse player profile JSON")
+		else:
+			print("Player Profile request failed: ", response_code, " body: ", body.get_string_from_utf8())
 		player_profile_request.queue_free()
 	)
 	
@@ -116,19 +118,19 @@ func _update_player_slot_details(id_to_fetch: int, slot_idx: int) -> void:
 
 func _on_start_match_pressed() -> void:
 	start_match_btn.disabled = true # Lock interactions to prevent spam
-	print("Creating match TEMP")
-	#var headers = ["Content-Type: application/json"]
-	#var url = BASE_URL + "/startMatch/" + str(GlobalVariables.match_id)
-	#start_http_request.request(url, headers, HTTPClient.METHOD_POST)
+	print("Requesting server to start match...")
+	var headers = ["Content-Type: application/json", "Content-Length: 0"]
+	var url = BASE_URL + "/startMatch/" + str(GlobalVariables.match_id)
+	start_http_request.request(url, headers, HTTPClient.METHOD_POST, "")
 
 func _on_match_started_by_server(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
 	if response_code == 200:
 		_launch_game_world()
 	else:
+		print("Failed to start match: ", response_code, " ", body.get_string_from_utf8())
 		start_match_btn.disabled = false # Re-enable if starting request dropped
 
 func _launch_game_world() -> void:
 	poll_timer.stop()
 	print("Match matches state requirements! Transitioning into floor arena loop...")
-	# Change this to point directly to your actual dungeon or battle map asset scene path
-	get_tree().change_scene_to_file("res://scenes/battle_arena.tscn")
+	get_tree().change_scene_to_file("res://scenes/arena.tscn")

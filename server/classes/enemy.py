@@ -62,5 +62,6 @@ class Enemy(BaseModel):
 
     @model_validator(mode='after')
     def validate_stats(self):
-        object.__setattr__(self, 'current_health', self.max_hp)
+        object.__setattr__(self, 'current_hp', self.max_hp)
+        return self
     
