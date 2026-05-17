@@ -15,6 +15,10 @@ run/main_scene="uid://bgt7ndrkp2avd"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+GlobalVariables="*uid://dt53sg0i5gj45"
+
 [dotnet]
 
 project/assembly_name="TowerClimb"

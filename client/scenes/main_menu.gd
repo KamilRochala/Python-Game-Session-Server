@@ -14,7 +14,7 @@ var current_class_index: int = 0
 @export var match_card_scene: PackedScene = preload("res://scenes/matchInfo.tscn")
 
 # The UI Container where match cards will be instantiated (e.g., a VBoxContainer)
-@onready var match_container: VBoxContainer = %RoomListContainer
+@onready var match_container: GridContainer = %GridContainer
 @onready var poll_http_request: HTTPRequest = $HTTPRequest
 
 # --- FIXED UNIQUE NODE REFERENCES ---
@@ -25,6 +25,9 @@ var current_class_index: int = 0
 @onready var atk_label: Label = %AttackRow/%AtkLabel      # Assumes you rename this node to AtkLabel
 @onready var log_message_label: Label = %LogMessageLabel
 @onready var http_request: HTTPRequest = $HTTPRequest
+
+# Track whether a poll request is actively in-flight
+var is_polling: bool = false
 
 func _ready() -> void:
 	# Automatically bind buttons if they aren't bound in the inspector
@@ -52,7 +55,7 @@ func _ready() -> void:
 	
 	add_child(poll_timer)
 	
-	# Optional: Fire the first request immediately so you don't wait 2 seconds to start
+	# Fire the first request immediately
 	_fetch_matches()
 
 func update_ui() -> void:
@@ -60,6 +63,7 @@ func update_ui() -> void:
 	if def_label: def_label.text = str(defence_stat)
 	if atk_label: atk_label.text = str(attack_stat)
 	print("Current selected class: ", classes[current_class_index])
+	GlobalVariables.player_class = classes[current_class_index]
 	
 	if name_input && name_input.text.strip_edges() != "":
 		log_message_label.text = ""
@@ -110,7 +114,6 @@ func _on_create_room_btn_pressed() -> void:
 		log_message_label.text = "Your player name has more than 10 letters!!!"
 		return
 		
-	
 	var chosen_class = classes[current_class_index]
 	var is_cleric = (chosen_class == "cleric")
 	
@@ -128,17 +131,13 @@ func _on_create_room_btn_pressed() -> void:
 	
 	log_message_label.text = "Creating player profile..."
 	
-	# Create a dynamic HTTPRequest just for creating the player
 	var dynamic_request = HTTPRequest.new()
 	add_child(dynamic_request)
 	
-	# Connect it to your specific function, and make it delete itself when done
 	dynamic_request.request_completed.connect(_on_player_created)
 	dynamic_request.request_completed.connect(func(_a,_b,_c,_d): dynamic_request.queue_free())
 	
 	dynamic_request.request(BASE_URL + "/addPlayer", headers, HTTPClient.METHOD_POST, json_body)
-
-# --- Handlers are now cleanly split ---
 
 func _on_player_created(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
 	var response_string = body.get_string_from_utf8()
@@ -148,25 +147,36 @@ func _on_player_created(result: int, response_code: int, headers: PackedStringAr
 		if json.parse(response_string) == OK:
 			var player_data = json.get_data()
 			var player_id = int(str(player_data.get("id")))
-			print("player ID: " + str(player_id)) 
 			log_message_label.text = "Player ready! Entering matchmaking slot..."
 			
-			# Now use your main/scene http_request node safely for step 2
 			var content_headers = ["Content-Type: application/json"]
+			GlobalVariables.player_id = player_id
 			http_request.request(BASE_URL + "/createMatch/" + str(player_id), content_headers, HTTPClient.METHOD_POST)
 	else:
 		print("Server Validation Error (422) Details: ", response_string)
 		log_message_label.text = "Server Error: " + str(response_code)
 
 
+# --- FIXED POLLING LOGIC ---
+
 func _fetch_matches() -> void:
-	# Check if the HTTP node is already busy with an unfinished request
-	if poll_http_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
-		var headers = ["Content-Type: application/json"]
-		poll_http_request.request(BASE_URL + "/getMatches", headers, HTTPClient.METHOD_GET)
+	# Use a simple boolean flag instead of checking HTTPClient status
+	if is_polling:
+		return
+		
+	var headers = ["Content-Type: application/json"]
+	var error = poll_http_request.request(BASE_URL + "/getMatches", headers, HTTPClient.METHOD_GET)
+	
+	if error == OK:
+		is_polling = true
+	else:
+		print("Failed to initiate HTTP request. Error code: ", error)
 
 # Handles the server response
 func _on_poll_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+	# Always unlock the polling mechanism when a response cycles through
+	is_polling = false
+
 	if response_code != 200:
 		print("Polling failed with response code: ", response_code)
 		return
@@ -177,28 +187,66 @@ func _on_poll_request_completed(result: int, response_code: int, headers: Packed
 	if json.parse(response_string) == OK:
 		var response_data = json.get_data()
 		
-		# Expecting an Array of match dictionaries from your server
 		if typeof(response_data) == TYPE_ARRAY:
 			_update_match_list(response_data)
 		else:
 			print("Server did not return an array of matches!")
 
 
-# Instantiates and repopulates the UI elements
+# Instantiates and reconciles the UI elements seamlessly
 func _update_match_list(matches: Array) -> void:
-	# 1. Clear out ALL existing children from the container object
+	# 1. Map existing UI cards by their match ID metadata
+	var current_cards = {}
 	for child in match_container.get_children():
-		child.queue_free()
-		
-	# 2. Loop through the returned array and instantiate a scene for each match
+		if child.has_meta("match_id"):
+			var existing_id = child.get_meta("match_id")
+			current_cards[existing_id] = child
+
+	# 2. If the database is completely empty, wipe the UI immediately and exit
+	if matches.is_empty():
+		for card in current_cards.values():
+			card.queue_free()
+		return
+
+	# 3. Track IDs coming in from the new server data
+	var incoming_ids = []
+
+	# 4. Handle additions and updates
 	for match_data in matches:
-		if match_card_scene:
-			# Instantiate the small scene
-			var card_instance = match_card_scene.instantiate()
+		if typeof(match_data) != TYPE_DICTIONARY:
+			continue
 			
-			# Add it to your UI container element
-			match_container.add_child(card_instance)
-			
-			# Pass the backend data into the card so it updates its own text/labels
-			if card_instance.has_method("set_match_data"):
-				card_instance.set_match_data(match_data)
+		var match_id = match_data.get("id")
+		if match_id == null:
+			continue
+		
+		incoming_ids.append(match_id)
+
+		if current_cards.has(match_id):
+			# Match already exists in UI! 
+			var existing_card = current_cards[match_id]
+			if existing_card.has_method("set_match_data"):
+				existing_card.set_match_data(match_data)
+		else:
+			# Match is brand new! Instantiate and add it.
+			if match_card_scene:
+				var card_instance = match_card_scene.instantiate()
+				
+				# Tag the node with its ID so we can find it during the next poll loop
+				card_instance.set_meta("match_id", match_id)
+				
+				match_container.add_child(card_instance)
+				
+				if card_instance.has_method("set_match_data"):
+					card_instance.set_match_data(match_data)
+
+	# 5. Handle removals safely using a clean boolean check
+	for old_id in current_cards.keys():
+		if incoming_ids.find(old_id) == -1:
+			var card_to_remove = current_cards[old_id]
+			if is_instance_valid(card_to_remove):
+				card_to_remove.queue_free()
+
+
+func _on_name_input_text_changed(new_text: String) -> void:
+	GlobalVariables.player_name = new_text

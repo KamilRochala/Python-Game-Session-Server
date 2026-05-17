@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://do5iw801fvtrt" path="res://scripts/match_info.gd" id="2_20dtk"]
 
 [node name="MatchInfo" type="Control" unique_id=1202485855]
+custom_minimum_size = Vector2(220, 103)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -24,26 +25,37 @@ offset_bottom = 40.0
 theme = ExtResource("1_coxyv")
 
 [node name="PanelContainer" type="PanelContainer" parent="Control" unique_id=844554308]
+clip_contents = true
+custom_minimum_size = Vector2(220, 103)
 layout_mode = 0
 offset_left = -3.0
 offset_top = 24.0
-offset_right = 168.0
+offset_right = 217.0
 offset_bottom = 127.0
 
 [node name="Main" type="HBoxContainer" parent="Control/PanelContainer" unique_id=1789064500]
+clip_contents = true
 layout_mode = 2
 
 [node name="Labels" type="VBoxContainer" parent="Control/PanelContainer/Main" unique_id=154197377]
+clip_contents = true
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 
 [node name="matchName" type="Label" parent="Control/PanelContainer/Main/Labels" unique_id=952221662]
+custom_minimum_size = Vector2(126, 19)
 layout_mode = 2
-text = "Ebstein67's lobby"
+size_flags_vertical = 3
+autowrap_mode = 1
 
 [node name="numberOfPlayers" type="Label" parent="Control/PanelContainer/Main/Labels" unique_id=1373801563]
 layout_mode = 2
-text = "2/4"
 
 [node name="Button" type="Button" parent="Control/PanelContainer/Main" unique_id=1235215814]
 layout_mode = 2
 text = "JOIN"
+
+[node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=1063344796]
+
+[connection signal="pressed" from="Control/PanelContainer/Main/Button" to="." method="_on_button_pressed"]

@@ -509,3 +509,22 @@ def create_match(player_id: int):
             cur.close()
         if conn:
             conn.close()
+
+@app.get("/getMatches")
+def get_matches():
+    # Connecting to the db
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        query = "SELECT * FROM matches WHERE status = 'waiting'"
+        cur.execute(query)
+        match = cur.fetchall()
+
+        if not match:
+            raise HTTPException(status_code=404, detail="Player not found")
+            
+        return match
+    finally:
+        cur.close()
+        conn.close()
