@@ -1,6 +1,6 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
@@ -27,7 +27,7 @@ def generate_reward(current_floor: int, is_healer: bool):
 
     modifier_name = ["Big", "Small", "Sharp", "Dull", "Rusty", "Shiny", "Ancient", "Sturdy"]
 
-    multiplier = (current_floor ^ 0.6) * (0.5 + 0.5(abs(sin(current_floor))))
+    multiplier = (current_floor ** 0.6) * (0.5 + 0.5(abs(sin(current_floor))))
 
     if reward_type == "weapon":
         weapon_name = ["Mace", "Sword", "Whip", "Greatsword", "Lance", "Spear", "Axe"]
@@ -81,7 +81,7 @@ def generate_enemies(current_floor: int, player_name: str):
     list_of_enemies = []
 
     number_of_enemies = random.randint(1, 5)
-    multiplier = (current_floor^0.7)
+    multiplier = (current_floor**0.7)
     #random.choice
 
     for number in range(number_of_enemies):
@@ -528,3 +528,94 @@ def get_matches():
     finally:
         cur.close()
         conn.close()
+
+# INSIDE MATCH ACTIONS
+
+# Schema model mapping for parsing our post request body 
+class AttackPayload(BaseModel):
+    enemy_id: int
+    damage_amount: float
+
+@app.post("/attackEnemy/{match_id}")
+def attack_enemy(match_id: int, payload: AttackPayload = Body(...)):
+    """
+    Processes an attack on an enemy row directly scoped to a unique match_id 
+    inside the main enemies database table.
+    """
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        # 1. Fetch the targeted enemy row. 
+        # Scoping using BOTH parameters ensures Room 1 cannot accidentally alter Room 2's targets.
+        cur.execute(
+            """
+            SELECT id, name, max_hp, current_hp, damage, armour 
+            FROM enemies 
+            WHERE id = %s AND match_id = %s
+            """,
+            (payload.enemy_id, match_id)
+        )
+        enemy_row = cur.fetchone()
+
+        if not enemy_row:
+            raise HTTPException(
+                status_code=404, 
+                detail="Target enemy variant not found within this specific match workspace"
+            )
+
+        # 2. Instantiate your Pydantic validation wrapper with database row fields
+        enemy_obj = Enemy(
+            max_hp=float(enemy_row["max_hp"]),
+            current_hp=float(enemy_row["current_hp"]),
+            damage=float(enemy_row["damage"]),
+            armour=int(enemy_row["armour"]),
+            name=str(enemy_row["name"])
+        )
+
+        # Quick checkpoint optimization: check if they are already defeated
+        if enemy_obj.current_hp <= 0:
+            return {
+                "message": f"{enemy_obj.name} is already down!", 
+                "damage_taken": 0, 
+                "current_hp": 0,
+                "is_dead": True
+            }
+
+        # 3. Fire your built-in damage instance function 
+        # This handles the armor calculations and updates enemy_obj.current_hp safely
+        actual_damage_dealt = enemy_obj.take_damage(int(payload.damage_amount))
+
+        # 4. Save the freshly updated health state directly back into the enemies row
+        cur.execute(
+            """
+            UPDATE enemies 
+            SET current_hp = %s 
+            WHERE id = %s AND match_id = %s
+            """,
+            (enemy_obj.current_hp, payload.enemy_id, match_id)
+        )
+        
+        # Lock in changes to the database
+        conn.commit()
+
+        # 5. Inform your Godot game client of the combat resolution details
+        return {
+            "enemy_name": enemy_obj.name,
+            "damage_attempted": payload.damage_amount,
+            "actual_damage_taken": actual_damage_dealt,
+            "current_hp": enemy_obj.current_hp,
+            "is_dead": (enemy_obj.current_hp <= 0)
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Database execution error: {str(e)}")
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
