@@ -112,12 +112,12 @@ def advance_turn_system(match_id: int, cur):
     players = [match["player_1_id"], match["player_2_id"], match["player_3_id"], match["player_4_id"]]
     active_player_ids = [pid for pid in players if pid is not None]
     
-    enemy_ids = match.get("enemy_ids", [])
+    enemy_ids = match.get("enemy_ids") or []
     
     # Filter out dead enemies
     living_enemy_ids = []
     if enemy_ids:
-        cur.execute("SELECT id FROM enemies WHERE id = ANY(%s) AND current_hp > 0", (enemy_ids,))
+        cur.execute("SELECT id FROM enemies WHERE id = ANY(%s) AND current_hp > 0 ORDER BY id ASC", (enemy_ids,))
         living_enemy_ids = [row["id"] for row in cur.fetchall()]
 
     # If all enemies are dead, combat is over!
@@ -125,20 +125,22 @@ def advance_turn_system(match_id: int, cur):
         return
 
     # Total combatants order array
-    combat_order = active_player_ids + living_enemy_ids
+    combat_order = [("player", pid) for pid in active_player_ids] + [("enemy", eid) for eid in living_enemy_ids]
     
     # Calculate next index position safely loop-wrapped
-    current_index = match.get("turn_index", 0)
+    current_index = match.get("turn_index")
+    if current_index is None:
+        current_index = 0
     next_index = (current_index + 1) % len(combat_order)
     
     # Update match with next index temporarily to prevent race conditions
     cur.execute("UPDATE matches SET turn_index = %s WHERE id = %s", (next_index, match_id))
-    current_turn_entity = combat_order[next_index]
+    current_entity_type, current_entity_id = combat_order[next_index]
 
     # 3. If the current entity is an ENEMY, automate its attack turn!
-    if current_turn_entity in living_enemy_ids:
+    if current_entity_type == "enemy":
         # Fetch enemy attack power
-        cur.execute("SELECT name, damage FROM enemies WHERE id = %s", (current_turn_entity,))
+        cur.execute("SELECT name, damage FROM enemies WHERE id = %s", (current_entity_id,))
         enemy = cur.fetchone()
         
         if enemy:
@@ -639,12 +641,17 @@ def attack_enemy(match_id: int, payload: AttackPayload = Body(...)):
         players = [match["player_1_id"], match["player_2_id"], match["player_3_id"], match["player_4_id"]]
         active_player_ids = [pid for pid in players if pid is not None]
         
-        enemy_ids = match.get("enemy_ids", [])
-        cur.execute("SELECT id FROM enemies WHERE id = ANY(%s) AND current_hp > 0", (enemy_ids,))
-        living_enemy_ids = [row["id"] for row in cur.fetchall()]
+        enemy_ids = match.get("enemy_ids") or []
+        if enemy_ids:
+            cur.execute("SELECT id FROM enemies WHERE id = ANY(%s) AND current_hp > 0 ORDER BY id ASC", (enemy_ids,))
+            living_enemy_ids = [row["id"] for row in cur.fetchall()]
+        else:
+            living_enemy_ids = []
         
-        combat_order = active_player_ids + living_enemy_ids
-        current_turn_index = match.get("turn_index", 0)
+        combat_order = [("player", pid) for pid in active_player_ids] + [("enemy", eid) for eid in living_enemy_ids]
+        current_turn_index = match.get("turn_index")
+        if current_turn_index is None:
+            current_turn_index = 0
 
         # 2. Safety constraint check: Is it actually a player's turn?
         if current_turn_index >= len(combat_order):
@@ -656,10 +663,10 @@ def attack_enemy(match_id: int, payload: AttackPayload = Body(...)):
         # 3. Check if the current attacker ID matches the client payload sender
         # Note: We assume you pass player_id from client to verify, or we derive it
         # For simplicity, we assume the action comes from whoever's turn it currently is:
-        current_turn_player_id = combat_order[current_turn_index]
+        current_entity_type, current_entity_id = combat_order[current_turn_index]
         
         # If the turn index points to an enemy, a player cannot strike!
-        if current_turn_player_id in living_enemy_ids:
+        if current_entity_type == "enemy":
             raise HTTPException(status_code=400, detail="It is currently the enemy's turn phase!")
 
         # 4. Process the core player attack execution 
@@ -688,11 +695,15 @@ def attack_enemy(match_id: int, payload: AttackPayload = Body(...)):
             "is_dead": (enemy_obj.current_hp <= 0),
         }
 
-    except HTTPException:
+    except HTTPException as he:
         conn.rollback()
+        print(f"HTTPException in attack_enemy: {he.detail}")
         raise
     except Exception as e:
         conn.rollback()
+        import traceback
+        traceback.print_exc()
+        print(f"Exception in attack_enemy: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()

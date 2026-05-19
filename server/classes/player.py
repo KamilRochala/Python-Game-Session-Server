@@ -107,7 +107,7 @@ class Player(BaseModel):
         
         object.__setattr__(self, 'max_health', self.base_max_health)
         object.__setattr__(self, 'damage', self.base_damage)
-        object.__setattr__(self, 'defence', self.base_damage)
+        object.__setattr__(self, 'defence', self.base_defence)
         object.__setattr__(self, 'healing_capacity', self.base_healing_capacity)
         object.__setattr__(self, 'current_health', self.base_max_health)
         # Calculate multipliers from accessories

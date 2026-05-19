@@ -36,6 +36,7 @@ const DEFAULT_ENEMY_SPRITE = preload("res://assets/ui/temp.png")
 
 var poll_timer: Timer
 var is_polling_match: bool = false
+var current_combat_buttons_disabled: bool = true
 
 func _ready() -> void:
 	# Add Floor Display
@@ -72,10 +73,10 @@ func _fetch_player_stats() -> void:
 			if json.parse(body.get_string_from_utf8()) == OK:
 				var p_data = json.get_data()
 				if is_instance_valid(current_hp_label):
-					current_hp_label.text = "Health: " + str(p_data.get("base_max_health", 0))
-					damage_label.text = "Damage: " + str(p_data.get("base_damage", 0))
-					healing_capacity_label.text = "Healing Capacity: " + str(p_data.get("base_healing_capacity", 0))
-					defence_label.text = "Defence: " + str(p_data.get("base_defence", 0))
+					current_hp_label.text = "Health: " + str(p_data.get("max_health", p_data.get("base_max_health", 0)))
+					damage_label.text = "Damage: " + str(p_data.get("damage", p_data.get("base_damage", 0)))
+					healing_capacity_label.text = "Healing Capacity: " + str(p_data.get("healing_capacity", p_data.get("base_healing_capacity", 0)))
+					defence_label.text = "Defence: " + str(p_data.get("defence", p_data.get("base_defence", 0)))
 		req.queue_free()
 	)
 	req.request(BASE_URL + "/player/" + str(GlobalVariables.player_id))
@@ -136,6 +137,7 @@ func _fetch_and_update_arena_player(player_id: int, ui_node: VBoxContainer) -> v
 					
 					var heal_btn = ui_node.get_node("HealBtn")
 					heal_btn.visible = true
+					heal_btn.disabled = current_combat_buttons_disabled
 					for connection in heal_btn.pressed.get_connections():
 						heal_btn.pressed.disconnect(connection.callable)
 					heal_btn.pressed.connect(func(): _send_heal_request(player_id))
@@ -192,6 +194,7 @@ func _fetch_and_update_arena_enemy(enemy_id: int, ui_node: VBoxContainer) -> voi
 					sprite_node.texture = DEFAULT_ENEMY_SPRITE
 					
 					var attack_btn = ui_node.get_node("AttackBtn")
+					attack_btn.disabled = current_combat_buttons_disabled
 					for connection in attack_btn.pressed.get_connections():
 						attack_btn.pressed.disconnect(connection.callable)
 						
@@ -228,12 +231,13 @@ func _synchronize_turn_ui(match_data: Dictionary) -> void:
 		return
 
 	var active_turn_entity_id = combat_order[current_turn_index]
+	var is_player_turn = current_turn_index < active_player_ids.size()
 
 	# 2. Check if the entity ID matching the active turn slot belongs to this local client player
-	if active_turn_entity_id == GlobalVariables.player_id:
+	if is_player_turn and active_turn_entity_id == GlobalVariables.player_id:
 		turn_notice_label.text = "YOUR TURN! Choose an action."
 		_set_combat_buttons_disabled(false) # Unlock inputs
-	elif active_turn_entity_id in active_player_ids:
+	elif is_player_turn:
 		turn_notice_label.text = "Ally Turn Phase..."
 		_set_combat_buttons_disabled(true)  # Lock inputs
 	else:
@@ -242,6 +246,7 @@ func _synchronize_turn_ui(match_data: Dictionary) -> void:
 
 
 func _set_combat_buttons_disabled(should_disable: bool) -> void:
+	current_combat_buttons_disabled = should_disable
 	# Toggle attack buttons on all visible enemies
 	for enemy_node in enemy_nodes:
 		if is_instance_valid(enemy_node) and enemy_node.visible:
@@ -259,15 +264,23 @@ func _send_attack_request(target_enemy_id: int) -> void:
 	var attack_req = HTTPRequest.new()
 	add_child(attack_req)
 	
+	var actual_damage: float = 10.0
+	if is_instance_valid(damage_label):
+		var text_val = damage_label.text.replace("Damage: ", "")
+		if text_val.is_valid_float():
+			actual_damage = float(text_val)
+	
 	var payload = {
 		"enemy_id": target_enemy_id,
-		"damage_amount": 10.0 
+		"damage_amount": actual_damage 
 	}
 	
 	attack_req.request_completed.connect(func(res, code, headers, body):
 		if code == 200:
 			print("Combat registration complete: ", body.get_string_from_utf8())
 			_poll_match_state() 
+		else:
+			print("Combat registration failed! Code: ", code, " Body: ", body.get_string_from_utf8())
 		attack_req.queue_free()
 	)
 	
