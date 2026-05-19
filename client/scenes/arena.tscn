@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://twx1e1w0qqpo" path="res://assets/ui/fight-background.png" id="2_xdvfk"]
 [ext_resource type="Texture2D" uid="uid://dntix4cc5gadw" path="res://assets/ui/background.png" id="3_7ft05"]
 [ext_resource type="Texture2D" uid="uid://dlhvue0kljgn1" path="res://assets/ui/knight-back.png" id="3_xdvfk"]
+[ext_resource type="Script" uid="uid://b11gb0t0cqofo" path="res://scripts/reward_overlay.gd" id="6_4ag8t"]
 [ext_resource type="Script" uid="uid://b8p178hq13wks" path="res://scripts/arena.gd" id="arena_script"]
 
 [node name="Arena" type="Control" unique_id=1192074160]
@@ -354,3 +355,43 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("3_7ft05")
 stretch_mode = 1
+
+[node name="RewardOverlay" type="PanelContainer" parent="." unique_id=650017160]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -375.0
+offset_top = -250.0
+offset_right = 375.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("6_4ag8t")
+
+[node name="HBoxContainer" type="VBoxContainer" parent="RewardOverlay" unique_id=1253851238]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="RewardOverlay/HBoxContainer" unique_id=39431754]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "Choose your reward:"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="RewardOverlay/HBoxContainer" unique_id=1664997723]
+layout_mode = 2
+
+[node name="Choice1" type="VBoxContainer" parent="RewardOverlay/HBoxContainer/HBoxContainer" unique_id=373790596]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Choice2" type="VBoxContainer" parent="RewardOverlay/HBoxContainer/HBoxContainer" unique_id=1779662583]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Choice3" type="VBoxContainer" parent="RewardOverlay/HBoxContainer/HBoxContainer" unique_id=1090531428]
+unique_name_in_owner = true
+layout_mode = 2
