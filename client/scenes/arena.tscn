@@ -5,6 +5,9 @@
 [ext_resource type="Texture2D" uid="uid://dntix4cc5gadw" path="res://assets/ui/background.png" id="3_7ft05"]
 [ext_resource type="Texture2D" uid="uid://dlhvue0kljgn1" path="res://assets/ui/knight-back.png" id="3_xdvfk"]
 [ext_resource type="Script" uid="uid://b11gb0t0cqofo" path="res://scripts/reward_overlay.gd" id="6_4ag8t"]
+[ext_resource type="Texture2D" uid="uid://bwk4daaqgoqf2" path="res://assets/accessories/amulet.png" id="7_naajo"]
+[ext_resource type="Texture2D" uid="uid://d38nwgrur71y2" path="res://assets/accessories/necklace.png" id="8_41jku"]
+[ext_resource type="Texture2D" uid="uid://chpuj58mwmabr" path="res://assets/armour/chestplate.png" id="9_k1k1x"]
 [ext_resource type="Script" uid="uid://b8p178hq13wks" path="res://scripts/arena.gd" id="arena_script"]
 
 [node name="Arena" type="Control" unique_id=1192074160]
@@ -169,6 +172,8 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Weapon" unique_id=501860675]
 layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Armour" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=236575629]
 custom_minimum_size = Vector2(100, 100)
@@ -176,6 +181,8 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Armour" unique_id=770815031]
 layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Accessory1" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=489245505]
 custom_minimum_size = Vector2(100, 100)
@@ -183,6 +190,8 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory1" unique_id=473515211]
 layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Accessory2" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=1976629846]
 custom_minimum_size = Vector2(100, 100)
@@ -190,6 +199,8 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory2" unique_id=1888677523]
 layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Accessory3" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=145655654]
 custom_minimum_size = Vector2(100, 100)
@@ -197,6 +208,8 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory3" unique_id=1452930749]
 layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Players" type="PanelContainer" parent="GridContainer" unique_id=1603540377]
 layout_mode = 2
@@ -358,6 +371,7 @@ stretch_mode = 1
 
 [node name="RewardOverlay" type="PanelContainer" parent="." unique_id=650017160]
 unique_name_in_owner = true
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -383,15 +397,80 @@ horizontal_alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="RewardOverlay/HBoxContainer" unique_id=1664997723]
 layout_mode = 2
+size_flags_vertical = 3
 
 [node name="Choice1" type="VBoxContainer" parent="RewardOverlay/HBoxContainer/HBoxContainer" unique_id=373790596]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="NameLabel" type="Label" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice1" unique_id=449795787]
+layout_mode = 2
+text = "ItemName"
+horizontal_alignment = 1
+
+[node name="TextureBox" type="TextureRect" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice1" unique_id=1004385468]
+layout_mode = 2
+size_flags_vertical = 3
+texture = ExtResource("7_naajo")
+expand_mode = 4
+
+[node name="StatsLabel" type="Label" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice1" unique_id=1111111111]
+layout_mode = 2
+text = "Stats"
+horizontal_alignment = 1
+
+[node name="SelectButton" type="Button" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice1" unique_id=952643356]
+layout_mode = 2
+text = "Choose"
 
 [node name="Choice2" type="VBoxContainer" parent="RewardOverlay/HBoxContainer/HBoxContainer" unique_id=1779662583]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="NameLabel" type="Label" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice2" unique_id=525805899]
+layout_mode = 2
+text = "ItemName"
+horizontal_alignment = 1
+
+[node name="TextureBox" type="TextureRect" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice2" unique_id=2113975597]
+layout_mode = 2
+texture = ExtResource("8_41jku")
+expand_mode = 4
+
+[node name="StatsLabel" type="Label" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice2" unique_id=2222222222]
+layout_mode = 2
+text = "Stats"
+horizontal_alignment = 1
+
+[node name="SelectButton" type="Button" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice2" unique_id=1672776906]
+layout_mode = 2
+text = "Choose"
 
 [node name="Choice3" type="VBoxContainer" parent="RewardOverlay/HBoxContainer/HBoxContainer" unique_id=1090531428]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="NameLabel" type="Label" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice3" unique_id=457063971]
+layout_mode = 2
+text = "ItemName"
+horizontal_alignment = 1
+
+[node name="TextureBox" type="TextureRect" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice3" unique_id=166887247]
+layout_mode = 2
+texture = ExtResource("9_k1k1x")
+expand_mode = 4
+
+[node name="StatsLabel" type="Label" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice3" unique_id=3333333333]
+layout_mode = 2
+text = "Stats"
+horizontal_alignment = 1
+
+[node name="SelectButton" type="Button" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice3" unique_id=203429614]
+layout_mode = 2
+text = "Choose"

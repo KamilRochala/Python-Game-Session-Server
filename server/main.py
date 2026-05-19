@@ -27,7 +27,7 @@ def generate_reward(current_floor: int, is_healer: bool):
 
     modifier_name = ["Big", "Small", "Sharp", "Dull", "Rusty", "Shiny", "Ancient", "Sturdy"]
 
-    multiplier = (current_floor ** 0.6) * (0.5 + 0.5(abs(sin(current_floor))))
+    multiplier = (current_floor ** 0.6) * (0.5 + 0.5 * (abs(sin(current_floor))))
 
     if reward_type == "weapon":
         weapon_name = ["Mace", "Sword", "Whip", "Greatsword", "Lance", "Spear", "Axe"]
@@ -39,17 +39,19 @@ def generate_reward(current_floor: int, is_healer: bool):
             name = random.choice(healer_name)
             item = Weapon(
                 name=f"{random_mod} {name}",
-                sprite_path=f"res://sprites/weapons/{name}.png",
-                damage=random.randint(1, 5) * multiplier,
-                healing_capacity=random.randint(5, 12) * multiplier,
+                sprite_path=f"res://assets/weapons/{name.lower()}.png",
+                floor_multiplier=int(multiplier) if int(multiplier) > 0 else 1,
+                damage=int(random.randint(1, 5) * multiplier),
+                healing_capacity=int(random.randint(5, 12) * multiplier),
                 weapon_type=WeaponType.CLERIC
             )
         else:
             name = random.choice(weapon_name)
             item = Weapon(
                 name=f"{random_mod} {name}",
-                sprite_path=f"res://sprites/weapons/{name}.png",
-                damage=random.randint(5, 15) * multiplier,
+                sprite_path=f"res://assets/weapons/{name.lower()}.png",
+                floor_multiplier=int(multiplier) if int(multiplier) > 0 else 1,
+                damage=int(random.randint(5, 15) * multiplier),
                 healing_capacity=0,
                 weapon_type=WeaponType.KNIGHT
             )
@@ -60,17 +62,20 @@ def generate_reward(current_floor: int, is_healer: bool):
         name = random.choice(armour_names)
         item = Armour(
             name=f"{random.choice(modifier_name)} {name}",
-            sprite_path=f"res://sprites/armours/{name}.png",
-            defence_ammount=random.randint(1, 10) * multiplier,
-            max_health_increase=random.randint(5, 20) * multiplier
+            sprite_path=f"res://assets/armour/{name.lower()}.png",
+            floor_multiplier=int(multiplier) if int(multiplier) > 0 else 1,
+            defence_ammount=int(random.randint(1, 10) * multiplier),
+            max_health_increase=int(random.randint(5, 20) * multiplier)
         )
         return item, "armour"
 
     else:
         acc_names = ["Ring", "Necklace", "Amulet", "Bracelet"]
+        name = random.choice(acc_names)
         item = Accessory(
-            name=f"{random.choice(modifier_name)} {random.choice(acc_names)}",
-            sprite_path="res://sprites/accessories/.png",
+            name=f"{random.choice(modifier_name)} {name}",
+            sprite_path=f"res://assets/accessories/{name.lower()}.png",
+            floor_multiplier=int(multiplier) if int(multiplier) > 0 else 1,
             what_stat_is_multiplied=random.choice(list(Stat)),
             stat_multiplier=round(random.uniform(1.05, 1.5), 2)
         )
@@ -88,7 +93,7 @@ def generate_enemies(current_floor: int, player_name: str):
         temp_enemy = Enemy(
             max_hp=random.randint(15, 25) * multiplier, 
             damage=random.randint(5,10) * multiplier, 
-            armour=random.randint(2,4) * multiplier, 
+            armour=int(random.randint(2,4) * multiplier), 
             name="Trywialne" if player_name == "Trivial" else random.choice(enemy_types)
         )
         list_of_enemies.append(temp_enemy)
@@ -277,21 +282,21 @@ def get_reward_choices(player_id: int):
                 cur.execute("""
                 INSERT INTO pending_reward_choices 
                 (player_id, choice_index, item_type, name, sprite_path, damage, healing_capacity, weapon_class)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """, (player_id, i, i_type, item.name, item.sprite_path, item.damage, item.healing_capacity, item.weapon_type.value))
                 
             elif i_type == "armour":
                 cur.execute("""
                 INSERT INTO pending_reward_choices 
                 (player_id, choice_index, item_type, name, sprite_path, defence_amount, max_health_increase)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """, (player_id, i, i_type, item.name, item.sprite_path,item.defence_ammount, item.max_health_increase))
                 
             elif i_type == "accessory":
                 cur.execute("""
                 INSERT INTO pending_reward_choices 
                 (player_id, choice_index, item_type, name, sprite_path, stat_to_multiply, stat_multiplier)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """, (player_id, i, i_type, item.name, item.sprite_path, item.what_stat_is_multiplied.value, item.stat_multiplier))
 
             choices_response.append({

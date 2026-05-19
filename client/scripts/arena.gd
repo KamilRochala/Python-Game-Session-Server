@@ -37,6 +37,11 @@ const DEFAULT_ENEMY_SPRITE = preload("res://assets/ui/temp.png")
 var poll_timer: Timer
 var is_polling_match: bool = false
 var current_combat_buttons_disabled: bool = true
+var is_reward_phase: bool = false
+var poll_enemy_requests_pending: int = 0
+var poll_living_enemies: int = 0
+var current_match_floor: int = -1
+var has_selected_reward_for_floor: bool = false
 
 func _ready() -> void:
 	# Add Floor Display
@@ -94,9 +99,16 @@ func _poll_match_state() -> void:
 			if json.parse(body.get_string_from_utf8()) == OK:
 				var match_data = json.get_data()
 				if typeof(match_data) == TYPE_DICTIONARY:
+					var m_floor = int(match_data.get("floor_number", 1))
+					if m_floor > current_match_floor:
+						current_match_floor = m_floor
+						has_selected_reward_for_floor = false
+						var flbl = get_node_or_null("FloorLabel")
+						if flbl: flbl.text = "Floor: " + str(m_floor)
+						
 					_process_match_party(match_data)
 					_process_match_enemies(match_data)
-					_synchronize_turn_ui(match_data) # <--- Keeps the active turn state updated
+					_synchronize_turn_ui(match_data)
 		req.queue_free()
 	)
 	
@@ -151,16 +163,25 @@ func _fetch_and_update_arena_player(player_id: int, ui_node: VBoxContainer) -> v
 
 
 func _process_match_enemies(match_data: Dictionary) -> void:
-	var enemy_ids = match_data.get("enemy_ids", [])
+	if match_data.get("status") != "in_progress": return
+	var enemy_ids = match_data.get("enemy_ids")
+	if enemy_ids == null: enemy_ids = []
+	
+	poll_enemy_requests_pending = 0
+	poll_living_enemies = 0
 	
 	for i in range(5):
 		var target_ui_node = enemy_nodes[i]
 		if not is_instance_valid(target_ui_node): continue
 			
 		if i < enemy_ids.size() and enemy_ids[i] != null:
+			poll_enemy_requests_pending += 1
 			_fetch_and_update_arena_enemy(int(enemy_ids[i]), target_ui_node)
 		else:
 			target_ui_node.visible = false
+			
+	if poll_enemy_requests_pending == 0:
+		_check_combat_end()
 
 
 func _fetch_and_update_arena_enemy(enemy_id: int, ui_node: VBoxContainer) -> void:
@@ -184,44 +205,79 @@ func _fetch_and_update_arena_enemy(enemy_id: int, ui_node: VBoxContainer) -> voi
 					
 					if current_hp <= 0:
 						ui_node.visible = false
-						req.queue_free()
-						return
+					else:
+						ui_node.visible = true
+						poll_living_enemies += 1
+						ui_node.get_node("Health").text = enemy_name + " HP: " + str(int(current_hp)) + "/" + str(int(max_hp))
 						
-					ui_node.visible = true
-					ui_node.get_node("Health").text = enemy_name + " HP: " + str(int(current_hp)) + "/" + str(int(max_hp))
-					
-					var sprite_node = ui_node.get_node("EnemySprite")
-					sprite_node.texture = DEFAULT_ENEMY_SPRITE
-					
-					var attack_btn = ui_node.get_node("AttackBtn")
-					attack_btn.disabled = current_combat_buttons_disabled
-					for connection in attack_btn.pressed.get_connections():
-						attack_btn.pressed.disconnect(connection.callable)
+						var sprite_node = ui_node.get_node("EnemySprite")
+						sprite_node.texture = DEFAULT_ENEMY_SPRITE
 						
-					attack_btn.pressed.connect(func():
-						_send_attack_request(enemy_id)
-					)
+						var attack_btn = ui_node.get_node("AttackBtn")
+						attack_btn.disabled = current_combat_buttons_disabled
+						for connection in attack_btn.pressed.get_connections():
+							attack_btn.pressed.disconnect(connection.callable)
+							
+						attack_btn.pressed.connect(func():
+							_send_attack_request(enemy_id)
+						)
+						
+					poll_enemy_requests_pending -= 1
+					if poll_enemy_requests_pending == 0:
+						_check_combat_end()
+						
 		req.queue_free()
 	)
 	req.request(BASE_URL + "/enemy/" + str(enemy_id), ["Content-Type: application/json"], HTTPClient.METHOD_GET)
 
 
+func _check_combat_end():
+	if poll_living_enemies == 0 and not is_reward_phase and not has_selected_reward_for_floor:
+		is_reward_phase = true
+		%TurnNotice.text = "Combat won! Choose your reward."
+		_set_combat_buttons_disabled(true)
+		%RewardOverlay.fetch_and_show_rewards()
+
+func _on_reward_selected(reward_data):
+	is_reward_phase = false
+	has_selected_reward_for_floor = true
+	if reward_data != null and reward_data.get("texture") != null:
+		var type = reward_data.get("type", "")
+		var tex = reward_data.get("texture")
+		
+		if type == "weapon":
+			$GridContainer/ItemsPanel/VBoxContainer/Items/Weapon/TextureRect.texture = tex
+		elif type == "armour":
+			$GridContainer/ItemsPanel/VBoxContainer/Items/Armour/TextureRect.texture = tex
+		elif type == "accessory":
+			# For simplicity, assign to Accessory1
+			$GridContainer/ItemsPanel/VBoxContainer/Items/Accessory1/TextureRect.texture = tex
+			
+	_fetch_player_stats()
+	_poll_match_state()
+
 # --- TURN SYNCHRONIZATION SYSTEM ---
 
 func _synchronize_turn_ui(match_data: Dictionary) -> void:
+	if is_reward_phase: return
+	
 	var turn_notice_label = %TurnNotice
 	if not is_instance_valid(turn_notice_label): return
 
-	# 1. Rebuild the exact turn order logic matching the server layout
 	var slots = ["player_1_id", "player_2_id", "player_3_id", "player_4_id"]
 	var active_player_ids: Array = []
 	for slot in slots:
 		if match_data.get(slot) != null:
 			active_player_ids.append(int(match_data.get(slot)))
 
-	# Only add enemy IDs that are generated into the match workspace
 	var enemy_ids: Array = match_data.get("enemy_ids", [])
 	
+	# If we selected a reward, but new enemies haven't spawned yet
+	if has_selected_reward_for_floor and poll_living_enemies == 0:
+		turn_notice_label.text = "Waiting for other players..."
+		_set_combat_buttons_disabled(true)
+		return
+		
 	var combat_order = active_player_ids + enemy_ids
 	var current_turn_index = int(match_data.get("turn_index", 0))
 
