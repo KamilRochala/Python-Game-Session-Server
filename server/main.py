@@ -315,6 +315,70 @@ def get_reward_choices(player_id: int):
         cur.close()
         conn.close()
 
+def recalculate_player_stats(player_id: int, cur):
+    cur.execute("SELECT * FROM players WHERE id = %s", (player_id,))
+    p = cur.fetchone()
+    if not p: return
+
+    # get weapon
+    w_dmg = 0
+    w_heal = 0
+    if p.get("weapon_id"):
+        cur.execute("SELECT damage, healing_capacity FROM weapons WHERE item_id = %s", (p["weapon_id"],))
+        w = cur.fetchone()
+        if w:
+            w_dmg = w["damage"]
+            w_heal = w["healing_capacity"]
+
+    # get armour
+    a_def = 0
+    a_hp = 0
+    if p.get("armour_id"):
+        cur.execute("SELECT defence_amount, max_health_increase FROM armours WHERE item_id = %s", (p["armour_id"],))
+        a = cur.fetchone()
+        if a:
+            a_def = a["defence_amount"]
+            a_hp = a["max_health_increase"]
+
+    # get accessories
+    mult_dmg = 1.0
+    mult_hp = 1.0
+    mult_heal = 1.0
+    add_def = 0.0
+
+    for acc_id in [p.get("acc_slot_1"), p.get("acc_slot_2"), p.get("acc_slot_3")]:
+        if acc_id:
+            cur.execute("SELECT stat_to_multiply, stat_multiplier FROM accessories WHERE item_id = %s", (acc_id,))
+            acc = cur.fetchone()
+            if acc:
+                stat = acc["stat_to_multiply"]
+                val = acc["stat_multiplier"]
+                if stat == "dmg": mult_dmg *= val
+                elif stat == "maxhp": mult_hp *= val
+                elif stat == "hc": mult_heal *= val
+                elif stat == "def": add_def += val
+
+    old_max_hp = p["max_health"]
+    
+    new_dmg = (p["base_damage"] + w_dmg) * mult_dmg
+    new_hp = (p["base_max_health"] + a_hp) * mult_hp
+    new_heal = (p["base_healing_capacity"] + w_heal) * mult_heal
+    new_def = p["base_defence"] + a_def + add_def
+    
+    current_hp = float(p["current_health"]) if p.get("current_health") is not None else float(p["base_max_health"])
+    if new_hp > old_max_hp:
+        current_hp += (new_hp - old_max_hp)
+    
+    if current_hp > new_hp:
+        current_hp = new_hp
+    
+    cur.execute('''
+        UPDATE players 
+        SET damage = %s, max_health = %s, healing_capacity = %s, defence = %s, current_health = %s
+        WHERE id = %s
+    ''', (new_dmg, new_hp, new_heal, new_def, current_hp, player_id))
+
+
 @app.post("/selectReward/{player_id}")
 def select_reward(player_id: int, req: SelectionRequest):
     if req.selected_index not in [1, 2, 3]:
@@ -364,6 +428,8 @@ def select_reward(player_id: int, req: SelectionRequest):
 
         # Clear pending choices after successful selection
         cur.execute("DELETE FROM pending_reward_choices WHERE player_id = %s", (player_id,))
+
+        recalculate_player_stats(player_id, cur)
 
         # Check if everyone else in the match is done
         cur.execute("""
@@ -729,6 +795,37 @@ def heal_player(match_id: int, payload: HealPayload = Body(...)):
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
+        # 0. Verify turn order
+        cur.execute("SELECT * FROM matches WHERE id = %s", (match_id,))
+        match = cur.fetchone()
+        if not match:
+            raise HTTPException(status_code=404, detail="Match not found")
+
+        players = [match["player_1_id"], match["player_2_id"], match["player_3_id"], match["player_4_id"]]
+        active_player_ids = [pid for pid in players if pid is not None]
+        
+        enemy_ids = match.get("enemy_ids") or []
+        if enemy_ids:
+            cur.execute("SELECT id FROM enemies WHERE id = ANY(%s) AND current_hp > 0 ORDER BY id ASC", (enemy_ids,))
+            living_enemy_ids = [row["id"] for row in cur.fetchall()]
+        else:
+            living_enemy_ids = []
+        
+        combat_order = [("player", pid) for pid in active_player_ids] + [("enemy", eid) for eid in living_enemy_ids]
+        current_turn_index = match.get("turn_index")
+        if current_turn_index is None:
+            current_turn_index = 0
+
+        if current_turn_index >= len(combat_order):
+            cur.execute("UPDATE matches SET turn_index = 0 WHERE id = %s", (match_id,))
+            conn.commit()
+            raise HTTPException(status_code=400, detail="Turn sequence desynchronized. Resetting index.")
+
+        current_entity_type, current_entity_id = combat_order[current_turn_index]
+        
+        if current_entity_type == "enemy":
+            raise HTTPException(status_code=400, detail="It is currently the enemy's turn phase!")
+
         # 1. Fetch the healer's profile to obtain their raw metrics
         cur.execute("SELECT * FROM players WHERE id = %s", (payload.healer_id,))
         healer_row = cur.fetchone()
@@ -763,6 +860,8 @@ def heal_player(match_id: int, payload: HealPayload = Body(...)):
             """,
             (new_hp, payload.target_player_id)
         )
+        
+        advance_turn_system(match_id, cur)
         
         conn.commit()
 

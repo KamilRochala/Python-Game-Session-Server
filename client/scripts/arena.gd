@@ -141,7 +141,7 @@ func _fetch_and_update_arena_player(player_id: int, ui_node: VBoxContainer) -> v
 				var profile = json.get_data()
 				if is_instance_valid(ui_node):
 					var name_str = str(profile.get("player_name", "Unknown"))
-					var max_hp = str(profile.get("base_max_health", "10"))
+					var max_hp = str(profile.get("max_health", profile.get("base_max_health", "10")))
 					var current_hp = str(profile.get("current_health", max_hp))
 					
 					ui_node.get_node("PlayerName").text = name_str
