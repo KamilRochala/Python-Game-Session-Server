@@ -1,143 +1,22 @@
 [gd_scene format=3 uid="uid://bgt7ndrkp2avd"]
 
-[ext_resource type="Script" uid="uid://duxf5ogx83v5g" path="res://scenes/main_menu.gd" id="1_l6cm7"]
-[ext_resource type="Texture2D" uid="uid://ch3adkcfvjm5j" path="res://assets/ui/temp.png" id="2_ekxnf"]
+[ext_resource type="Script" uid="uid://duxf5ogx83v5g" path="res://scripts/main_menu.gd" id="1_l6cm7"]
+[ext_resource type="Theme" uid="uid://gp6vxgd3vyl7" path="res://assets/themes/mainTheme.tres" id="2_8ln24"]
+[ext_resource type="Texture2D" uid="uid://dntix4cc5gadw" path="res://assets/ui/background.png" id="2_rtw2f"]
+[ext_resource type="Texture2D" uid="uid://sg0vkgu3p8r" path="res://assets/ui/text_box.png" id="2_wu84c"]
+[ext_resource type="FontFile" uid="uid://dykhg40beqfhv" path="res://assets/fonts/dpcomic.ttf" id="3_8ln24"]
+[ext_resource type="Texture2D" uid="uid://cim08ds7dh37m" path="res://assets/ui/minus-button.png" id="6_5dd4i"]
+[ext_resource type="Texture2D" uid="uid://cacbt5fajtqs6" path="res://assets/ui/minus-button-pressed.png" id="7_lgwnu"]
+[ext_resource type="Texture2D" uid="uid://btgvbw0ybs1ex" path="res://assets/ui/plus-button.png" id="8_flqon"]
+[ext_resource type="Texture2D" uid="uid://ptjvve2iy01b" path="res://assets/ui/knight.png" id="9_5dd4i"]
+[ext_resource type="Texture2D" uid="uid://jg4sgkxcpc7m" path="res://assets/ui/plus-button-pressed.png" id="9_rcqid"]
 
-[sub_resource type="FontFile" id="FontFile_bqqt6"]
-cache/0/variation_coordinates = {}
-cache/0/face_index = 0
-cache/0/embolden = 0.0
-cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
-cache/0/spacing_top = 0
-cache/0/spacing_bottom = 0
-cache/0/spacing_space = 0
-cache/0/spacing_glyph = 0
-cache/0/baseline_offset = 0.0
-cache/0/16/0/ascent = 0.0
-cache/0/16/0/descent = 0.0
-cache/0/16/0/underline_position = 0.0
-cache/0/16/0/underline_thickness = 0.0
-cache/0/16/0/scale = 1.0
-cache/0/17/0/ascent = 0.0
-cache/0/17/0/descent = 0.0
-cache/0/17/0/underline_position = 0.0
-cache/0/17/0/underline_thickness = 0.0
-cache/0/17/0/scale = 1.0
-cache/0/18/0/ascent = 0.0
-cache/0/18/0/descent = 0.0
-cache/0/18/0/underline_position = 0.0
-cache/0/18/0/underline_thickness = 0.0
-cache/0/18/0/scale = 1.0
-cache/0/19/0/ascent = 0.0
-cache/0/19/0/descent = 0.0
-cache/0/19/0/underline_position = 0.0
-cache/0/19/0/underline_thickness = 0.0
-cache/0/19/0/scale = 1.0
-cache/0/20/0/ascent = 0.0
-cache/0/20/0/descent = 0.0
-cache/0/20/0/underline_position = 0.0
-cache/0/20/0/underline_thickness = 0.0
-cache/0/20/0/scale = 1.0
-cache/0/21/0/ascent = 0.0
-cache/0/21/0/descent = 0.0
-cache/0/21/0/underline_position = 0.0
-cache/0/21/0/underline_thickness = 0.0
-cache/0/21/0/scale = 1.0
-cache/0/22/0/ascent = 0.0
-cache/0/22/0/descent = 0.0
-cache/0/22/0/underline_position = 0.0
-cache/0/22/0/underline_thickness = 0.0
-cache/0/22/0/scale = 1.0
-cache/0/23/0/ascent = 0.0
-cache/0/23/0/descent = 0.0
-cache/0/23/0/underline_position = 0.0
-cache/0/23/0/underline_thickness = 0.0
-cache/0/23/0/scale = 1.0
-cache/0/24/0/ascent = 0.0
-cache/0/24/0/descent = 0.0
-cache/0/24/0/underline_position = 0.0
-cache/0/24/0/underline_thickness = 0.0
-cache/0/24/0/scale = 1.0
-cache/0/25/0/ascent = 0.0
-cache/0/25/0/descent = 0.0
-cache/0/25/0/underline_position = 0.0
-cache/0/25/0/underline_thickness = 0.0
-cache/0/25/0/scale = 1.0
-cache/0/26/0/ascent = 0.0
-cache/0/26/0/descent = 0.0
-cache/0/26/0/underline_position = 0.0
-cache/0/26/0/underline_thickness = 0.0
-cache/0/26/0/scale = 1.0
-cache/0/27/0/ascent = 0.0
-cache/0/27/0/descent = 0.0
-cache/0/27/0/underline_position = 0.0
-cache/0/27/0/underline_thickness = 0.0
-cache/0/27/0/scale = 1.0
-cache/0/28/0/ascent = 0.0
-cache/0/28/0/descent = 0.0
-cache/0/28/0/underline_position = 0.0
-cache/0/28/0/underline_thickness = 0.0
-cache/0/28/0/scale = 1.0
-cache/0/29/0/ascent = 0.0
-cache/0/29/0/descent = 0.0
-cache/0/29/0/underline_position = 0.0
-cache/0/29/0/underline_thickness = 0.0
-cache/0/29/0/scale = 1.0
-cache/0/30/0/ascent = 0.0
-cache/0/30/0/descent = 0.0
-cache/0/30/0/underline_position = 0.0
-cache/0/30/0/underline_thickness = 0.0
-cache/0/30/0/scale = 1.0
-cache/0/31/0/ascent = 0.0
-cache/0/31/0/descent = 0.0
-cache/0/31/0/underline_position = 0.0
-cache/0/31/0/underline_thickness = 0.0
-cache/0/31/0/scale = 1.0
-cache/0/32/0/ascent = 0.0
-cache/0/32/0/descent = 0.0
-cache/0/32/0/underline_position = 0.0
-cache/0/32/0/underline_thickness = 0.0
-cache/0/32/0/scale = 1.0
-cache/0/33/0/ascent = 0.0
-cache/0/33/0/descent = 0.0
-cache/0/33/0/underline_position = 0.0
-cache/0/33/0/underline_thickness = 0.0
-cache/0/33/0/scale = 1.0
-cache/0/34/0/ascent = 0.0
-cache/0/34/0/descent = 0.0
-cache/0/34/0/underline_position = 0.0
-cache/0/34/0/underline_thickness = 0.0
-cache/0/34/0/scale = 1.0
-cache/0/35/0/ascent = 0.0
-cache/0/35/0/descent = 0.0
-cache/0/35/0/underline_position = 0.0
-cache/0/35/0/underline_thickness = 0.0
-cache/0/35/0/scale = 1.0
-cache/0/36/0/ascent = 0.0
-cache/0/36/0/descent = 0.0
-cache/0/36/0/underline_position = 0.0
-cache/0/36/0/underline_thickness = 0.0
-cache/0/36/0/scale = 1.0
-cache/0/37/0/ascent = 0.0
-cache/0/37/0/descent = 0.0
-cache/0/37/0/underline_position = 0.0
-cache/0/37/0/underline_thickness = 0.0
-cache/0/37/0/scale = 1.0
-cache/0/38/0/ascent = 0.0
-cache/0/38/0/descent = 0.0
-cache/0/38/0/underline_position = 0.0
-cache/0/38/0/underline_thickness = 0.0
-cache/0/38/0/scale = 1.0
-cache/0/39/0/ascent = 0.0
-cache/0/39/0/descent = 0.0
-cache/0/39/0/underline_position = 0.0
-cache/0/39/0/underline_thickness = 0.0
-cache/0/39/0/scale = 1.0
-cache/0/40/0/ascent = 0.0
-cache/0/40/0/descent = 0.0
-cache/0/40/0/underline_position = 0.0
-cache/0/40/0/underline_thickness = 0.0
-cache/0/40/0/scale = 1.0
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_jk1qb"]
+texture = ExtResource("2_wu84c")
+texture_margin_left = 20.0
+texture_margin_top = 20.0
+texture_margin_right = 20.0
+texture_margin_bottom = 20.0
 
 [node name="MainMenu" type="Control" unique_id=782003082]
 layout_mode = 3
@@ -156,14 +35,18 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+texture = ExtResource("2_rtw2f")
+stretch_mode = 1
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=2001336648]
+texture_filter = 1
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_8ln24")
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 32
 theme_override_constants/margin_right = 32
@@ -172,147 +55,189 @@ theme_override_constants/margin_bottom = 32
 [node name="ColumnsContainer" type="HBoxContainer" parent="MarginContainer" unique_id=1445321534]
 layout_mode = 2
 
-[node name="LeftColumn" type="VBoxContainer" parent="MarginContainer/ColumnsContainer" unique_id=607359852]
+[node name="LeftColumnContainer" type="PanelContainer" parent="MarginContainer/ColumnsContainer" unique_id=1701507949]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LeftColumn" type="VBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumnContainer" unique_id=607359852]
 layout_mode = 2
 size_flags_horizontal = 3
 metadata/_edit_use_anchors_ = true
 
-[node name="GameTitle" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumn" unique_id=230456782]
+[node name="GameTitle" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn" unique_id=230456782]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_fonts/font = SubResource("FontFile_bqqt6")
+theme_override_fonts/font = ExtResource("3_8ln24")
 theme_override_font_sizes/font_size = 40
 text = "Tower Climb"
 horizontal_alignment = 1
 
-[node name="CreatorBox" type="VBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumn" unique_id=859190996]
+[node name="CreatorBox" type="VBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn" unique_id=859190996]
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="NameRow" type="HBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox" unique_id=2145289602]
+[node name="NameRow" type="HBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox" unique_id=2145289602]
 layout_mode = 2
 
-[node name="Label_Name" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox/NameRow" unique_id=850029043]
+[node name="Label_Name" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox/NameRow" unique_id=850029043]
 layout_mode = 2
 text = "Player Name:"
 
-[node name="NameInput" type="LineEdit" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox/NameRow" unique_id=1299388491]
+[node name="NameInput" type="LineEdit" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox/NameRow" unique_id=1299388491]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 4
+theme = ExtResource("2_8ln24")
 placeholder_text = "Name"
 
-[node name="PointsLabel" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox" unique_id=243097939]
+[node name="PointsLabel" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox" unique_id=243097939]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Available Points: 5"
 horizontal_alignment = 1
 
-[node name="DefLabel" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox" unique_id=1208862362]
+[node name="DefLabel" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox" unique_id=1208862362]
 layout_mode = 2
 text = "
 Defence
 "
 horizontal_alignment = 1
 
-[node name="DefenceRow" type="HBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox" unique_id=604162839]
+[node name="DefenceRow" type="HBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox" unique_id=604162839]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DefMinusBtn" type="Button" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox/DefenceRow" unique_id=603803523]
+[node name="DefMinusBtn" type="TextureButton" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox/DefenceRow" unique_id=868659238]
 unique_name_in_owner = true
 layout_mode = 2
-text = "-"
+texture_normal = ExtResource("6_5dd4i")
+texture_pressed = ExtResource("7_lgwnu")
+texture_hover = ExtResource("6_5dd4i")
 
-[node name="DefLabel" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox/DefenceRow" unique_id=636344824]
+[node name="DefLabel" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox/DefenceRow" unique_id=636344824]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 22
 text = "10"
 
-[node name="DefPlusBtn" type="Button" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox/DefenceRow" unique_id=932357164]
+[node name="DefPlusBtn" type="TextureButton" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox/DefenceRow" unique_id=1958536759]
 unique_name_in_owner = true
 layout_mode = 2
-text = "+"
+texture_normal = ExtResource("8_flqon")
+texture_pressed = ExtResource("9_rcqid")
+texture_hover = ExtResource("8_flqon")
 
-[node name="AtkLabel" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox" unique_id=1115468658]
+[node name="AtkLabel" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox" unique_id=1115468658]
 layout_mode = 2
 text = "
 Attack
 "
 horizontal_alignment = 1
 
-[node name="AttackRow" type="HBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox" unique_id=1551062691]
+[node name="AttackRow" type="HBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox" unique_id=1551062691]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="AtkMinusBtn" type="Button" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox/AttackRow" unique_id=1608040307]
+[node name="AtkMinusBtn" type="TextureButton" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox/AttackRow" unique_id=575225039]
 unique_name_in_owner = true
 layout_mode = 2
-text = "-"
+texture_normal = ExtResource("6_5dd4i")
+texture_pressed = ExtResource("7_lgwnu")
+texture_hover = ExtResource("6_5dd4i")
 
-[node name="AtkLabel" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox/AttackRow" unique_id=2132776780]
+[node name="AtkLabel" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox/AttackRow" unique_id=2132776780]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_font_sizes/font_size = 22
 text = "10"
 
-[node name="AtkPlusBtn" type="Button" parent="MarginContainer/ColumnsContainer/LeftColumn/CreatorBox/AttackRow" unique_id=1779406747]
+[node name="AtkPlusBtn" type="TextureButton" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox/AttackRow" unique_id=959108049]
 unique_name_in_owner = true
 layout_mode = 2
-text = "+"
+texture_normal = ExtResource("8_flqon")
+texture_pressed = ExtResource("9_rcqid")
+texture_hover = ExtResource("8_flqon")
 
-[node name="ClassSelectorRow" type="HBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumn" unique_id=1459352577]
+[node name="ClassSelectorRow" type="HBoxContainer" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn" unique_id=1459352577]
 layout_mode = 2
 size_flags_vertical = 10
 
-[node name="PrevClassBtn" type="Button" parent="MarginContainer/ColumnsContainer/LeftColumn/ClassSelectorRow" unique_id=21139274]
+[node name="PrevClassBtn" type="Button" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/ClassSelectorRow" unique_id=21139274]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
 text = "<"
 
-[node name="ClassPortrait" type="TextureRect" parent="MarginContainer/ColumnsContainer/LeftColumn/ClassSelectorRow" unique_id=57019239]
+[node name="ClassPortrait" type="TextureRect" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/ClassSelectorRow" unique_id=57019239]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 size_flags_horizontal = 3
-texture = ExtResource("2_ekxnf")
+texture = ExtResource("9_5dd4i")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="NextClassBtn" type="Button" parent="MarginContainer/ColumnsContainer/LeftColumn/ClassSelectorRow" unique_id=825275757]
+[node name="NextClassBtn" type="Button" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/ClassSelectorRow" unique_id=825275757]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 text = ">"
 
-[node name="RightColumn" type="VBoxContainer" parent="MarginContainer/ColumnsContainer" unique_id=519201512]
+[node name="ClassDescription" type="Label" parent="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn" unique_id=455321312]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "Deals big damage and wields blunt weapons"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="RightCollumnContainer" type="PanelContainer" parent="MarginContainer/ColumnsContainer" unique_id=1776588546]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxTexture_jk1qb")
+
+[node name="RightColumn" type="VBoxContainer" parent="MarginContainer/ColumnsContainer/RightCollumnContainer" unique_id=519201512]
 layout_mode = 2
 size_flags_horizontal = 3
 metadata/_edit_use_anchors_ = true
 
-[node name="CreateRoom" type="Button" parent="MarginContainer/ColumnsContainer/RightColumn" unique_id=309435197]
+[node name="CreateRoom" type="Button" parent="MarginContainer/ColumnsContainer/RightCollumnContainer/RightColumn" unique_id=309435197]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 32
 text = "CREATE ROOM"
 
-[node name="RoomListScroll" type="ScrollContainer" parent="MarginContainer/ColumnsContainer/RightColumn" unique_id=574181422]
+[node name="RoomListScroll" type="ScrollContainer" parent="MarginContainer/ColumnsContainer/RightCollumnContainer/RightColumn" unique_id=574181422]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="RoomListContainer" type="VBoxContainer" parent="MarginContainer/ColumnsContainer/RightColumn/RoomListScroll" unique_id=1918485315]
-layout_mode = 2
-
-[node name="LogMessageLabel" type="Label" parent="MarginContainer/ColumnsContainer/RightColumn" unique_id=758907559]
+[node name="GridContainer" type="GridContainer" parent="MarginContainer/ColumnsContainer/RightCollumnContainer/RightColumn/RoomListScroll" unique_id=1149796433]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "Your Player has no name!!!"
-horizontal_alignment = 1
+columns = 2
+
+[node name="IPContainer" type="HBoxContainer" parent="MarginContainer/ColumnsContainer/RightCollumnContainer/RightColumn" unique_id=758907559]
+layout_mode = 2
+alignment = 1
+
+[node name="IPLineEdit" type="LineEdit" parent="MarginContainer/ColumnsContainer/RightCollumnContainer/RightColumn/IPContainer" unique_id=758907560]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Input server's IPv4, example: 127.0.0.1"
+
+[node name="IPConfirmBtn" type="Button" parent="MarginContainer/ColumnsContainer/RightCollumnContainer/RightColumn/IPContainer" unique_id=758907561]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Confirm IP"
 
 [node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=1060589043]
+
+[connection signal="text_changed" from="MarginContainer/ColumnsContainer/LeftColumnContainer/LeftColumn/CreatorBox/NameRow/NameInput" to="." method="_on_name_input_text_changed"]

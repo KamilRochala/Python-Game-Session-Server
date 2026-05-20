@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict v5wX5MOTLyvY5ThsIXdMX1KOL7Wn83FiLz6jlVZTdTJy2M7ATmao2uo6yxdGeYD
+\restrict P3NooDA8FvddUgmNzm9z6keoFesq6tPvXY8edqWD8PhIMnTNUUMamoOaxvoOqE5
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.1
 
--- Started on 2026-05-13 23:25:44
+-- Started on 2026-05-20 22:38:57
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -22,7 +22,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 889 (class 1247 OID 16903)
+-- TOC entry 891 (class 1247 OID 16903)
 -- Name: item_type; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -36,7 +36,7 @@ CREATE TYPE public.item_type AS ENUM (
 ALTER TYPE public.item_type OWNER TO postgres;
 
 --
--- TOC entry 865 (class 1247 OID 16780)
+-- TOC entry 867 (class 1247 OID 16780)
 -- Name: match_status; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -50,7 +50,7 @@ CREATE TYPE public.match_status AS ENUM (
 ALTER TYPE public.match_status OWNER TO postgres;
 
 --
--- TOC entry 862 (class 1247 OID 16775)
+-- TOC entry 864 (class 1247 OID 16775)
 -- Name: player_class; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -63,7 +63,7 @@ CREATE TYPE public.player_class AS ENUM (
 ALTER TYPE public.player_class OWNER TO postgres;
 
 --
--- TOC entry 868 (class 1247 OID 16788)
+-- TOC entry 870 (class 1247 OID 16788)
 -- Name: stat_type; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -110,6 +110,49 @@ CREATE TABLE public.armours (
 ALTER TABLE public.armours OWNER TO postgres;
 
 --
+-- TOC entry 231 (class 1259 OID 17098)
+-- Name: enemies; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.enemies (
+    id integer NOT NULL,
+    match_id integer,
+    max_hp double precision NOT NULL,
+    current_hp double precision NOT NULL,
+    damage double precision NOT NULL,
+    armour integer NOT NULL,
+    name text NOT NULL
+);
+
+
+ALTER TABLE public.enemies OWNER TO postgres;
+
+--
+-- TOC entry 230 (class 1259 OID 17097)
+-- Name: enemies_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.enemies_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.enemies_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 4997 (class 0 OID 0)
+-- Dependencies: 230
+-- Name: enemies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.enemies_id_seq OWNED BY public.enemies.id;
+
+
+--
 -- TOC entry 220 (class 1259 OID 16798)
 -- Name: items; Type: TABLE; Schema: public; Owner: postgres
 --
@@ -117,8 +160,7 @@ ALTER TABLE public.armours OWNER TO postgres;
 CREATE TABLE public.items (
     id integer NOT NULL,
     name text NOT NULL,
-    sprite_path text NOT NULL,
-    floor_multiplier integer DEFAULT 1
+    sprite_path text NOT NULL
 );
 
 
@@ -141,7 +183,7 @@ CREATE SEQUENCE public.items_id_seq
 ALTER SEQUENCE public.items_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4989 (class 0 OID 0)
+-- TOC entry 4998 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -162,7 +204,8 @@ CREATE TABLE public.matches (
     player_3_id integer,
     player_4_id integer,
     enemy_ids integer[],
-    floor_number integer
+    floor_number integer,
+    turn_index integer DEFAULT 0
 );
 
 
@@ -185,7 +228,7 @@ CREATE SEQUENCE public.matches_id_seq
 ALTER SEQUENCE public.matches_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4990 (class 0 OID 0)
+-- TOC entry 4999 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: matches_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -205,7 +248,6 @@ CREATE TABLE public.pending_reward_choices (
     item_type public.item_type NOT NULL,
     name text NOT NULL,
     sprite_path text NOT NULL,
-    floor_multiplier integer DEFAULT 1,
     damage integer,
     healing_capacity integer,
     weapon_class public.player_class,
@@ -237,7 +279,7 @@ CREATE SEQUENCE public.pending_reward_choices_id_seq
 ALTER SEQUENCE public.pending_reward_choices_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4991 (class 0 OID 0)
+-- TOC entry 5000 (class 0 OID 0)
 -- Dependencies: 228
 -- Name: pending_reward_choices_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -265,24 +307,11 @@ CREATE TABLE public.players (
     defence double precision,
     weapon_id integer,
     armour_id integer,
-    acc_slot_1 integer,
-    acc_slot_2 integer,
-    acc_slot_3 integer
+    acc_slot_1 integer
 );
 
-
-CREATE TABLE IF NOT EXISTS public.enemies (
-    id SERIAL PRIMARY KEY,
-    match_id INTEGER REFERENCES public.matches(id),
-    max_hp FLOAT NOT NULL,
-    current_hp FLOAT NOT NULL,
-    damage FLOAT NOT NULL,
-    armour INTEGER NOT NULL,
-    name TEXT NOT NULL
-);
 
 ALTER TABLE public.players OWNER TO postgres;
-ALTER TABLE public.enemies OWNER TO postgres;
 
 --
 -- TOC entry 224 (class 1259 OID 16834)
@@ -301,7 +330,7 @@ CREATE SEQUENCE public.players_id_seq
 ALTER SEQUENCE public.players_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4992 (class 0 OID 0)
+-- TOC entry 5001 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: players_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -325,7 +354,15 @@ CREATE TABLE public.weapons (
 ALTER TABLE public.weapons OWNER TO postgres;
 
 --
--- TOC entry 4794 (class 2604 OID 16932)
+-- TOC entry 4806 (class 2604 OID 17101)
+-- Name: enemies id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.enemies ALTER COLUMN id SET DEFAULT nextval('public.enemies_id_seq'::regclass);
+
+
+--
+-- TOC entry 4799 (class 2604 OID 17117)
 -- Name: items id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -333,7 +370,7 @@ ALTER TABLE ONLY public.items ALTER COLUMN id SET DEFAULT nextval('public.items_
 
 
 --
--- TOC entry 4797 (class 2604 OID 16933)
+-- TOC entry 4801 (class 2604 OID 17118)
 -- Name: matches id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -341,7 +378,7 @@ ALTER TABLE ONLY public.matches ALTER COLUMN id SET DEFAULT nextval('public.matc
 
 
 --
--- TOC entry 4799 (class 2604 OID 16934)
+-- TOC entry 4804 (class 2604 OID 17119)
 -- Name: pending_reward_choices id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -349,7 +386,7 @@ ALTER TABLE ONLY public.pending_reward_choices ALTER COLUMN id SET DEFAULT nextv
 
 
 --
--- TOC entry 4796 (class 2604 OID 16935)
+-- TOC entry 4800 (class 2604 OID 17120)
 -- Name: players id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -357,7 +394,7 @@ ALTER TABLE ONLY public.players ALTER COLUMN id SET DEFAULT nextval('public.play
 
 
 --
--- TOC entry 4977 (class 0 OID 16826)
+-- TOC entry 4983 (class 0 OID 16826)
 -- Dependencies: 223
 -- Data for Name: accessories; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -367,7 +404,7 @@ COPY public.accessories (item_id, stat_to_multiply, stat_multiplier) FROM stdin;
 
 
 --
--- TOC entry 4976 (class 0 OID 16818)
+-- TOC entry 4982 (class 0 OID 16818)
 -- Dependencies: 222
 -- Data for Name: armours; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -377,48 +414,57 @@ COPY public.armours (item_id, defence_amount, max_health_increase) FROM stdin;
 
 
 --
--- TOC entry 4974 (class 0 OID 16798)
+-- TOC entry 4991 (class 0 OID 17098)
+-- Dependencies: 231
+-- Data for Name: enemies; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.enemies (id, match_id, max_hp, current_hp, damage, armour, name) FROM stdin;
+\.
+
+
+--
+-- TOC entry 4980 (class 0 OID 16798)
 -- Dependencies: 220
 -- Data for Name: items; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.items (id, name, sprite_path, floor_multiplier) FROM stdin;
+COPY public.items (id, name, sprite_path) FROM stdin;
 \.
 
 
 --
--- TOC entry 4981 (class 0 OID 16872)
+-- TOC entry 4987 (class 0 OID 16872)
 -- Dependencies: 227
 -- Data for Name: matches; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.matches (id, status, player_1_id, player_2_id, player_3_id, player_4_id, enemy_ids, floor_number) FROM stdin;
+COPY public.matches (id, status, player_1_id, player_2_id, player_3_id, player_4_id, enemy_ids, floor_number, turn_index) FROM stdin;
 \.
 
 
 --
--- TOC entry 4983 (class 0 OID 16910)
+-- TOC entry 4989 (class 0 OID 16910)
 -- Dependencies: 229
 -- Data for Name: pending_reward_choices; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.pending_reward_choices (id, player_id, choice_index, item_type, name, sprite_path, floor_multiplier, damage, healing_capacity, weapon_class, defence_amount, max_health_increase, stat_to_multiply, stat_multiplier, created_at) FROM stdin;
+COPY public.pending_reward_choices (id, player_id, choice_index, item_type, name, sprite_path, damage, healing_capacity, weapon_class, defence_amount, max_health_increase, stat_to_multiply, stat_multiplier, created_at) FROM stdin;
 \.
 
 
 --
--- TOC entry 4979 (class 0 OID 16835)
+-- TOC entry 4985 (class 0 OID 16835)
 -- Dependencies: 225
 -- Data for Name: players; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.players (id, player_name, player_class, base_max_health, max_health, current_health, base_damage, damage, base_healing_capacity, healing_capacity, base_defence, defence, weapon_id, armour_id, acc_slot_1, acc_slot_2, acc_slot_3) FROM stdin;
-5	test	knight	10	\N	\N	5	\N	0	\N	5	\N	\N	\N	\N	\N	\N
+COPY public.players (id, player_name, player_class, base_max_health, max_health, current_health, base_damage, damage, base_healing_capacity, healing_capacity, base_defence, defence, weapon_id, armour_id, acc_slot_1) FROM stdin;
 \.
 
 
 --
--- TOC entry 4975 (class 0 OID 16810)
+-- TOC entry 4981 (class 0 OID 16810)
 -- Dependencies: 221
 -- Data for Name: weapons; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -428,7 +474,16 @@ COPY public.weapons (item_id, damage, healing_capacity, weapon_type) FROM stdin;
 
 
 --
--- TOC entry 4993 (class 0 OID 0)
+-- TOC entry 5002 (class 0 OID 0)
+-- Dependencies: 230
+-- Name: enemies_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.enemies_id_seq', 1, false);
+
+
+--
+-- TOC entry 5003 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -437,7 +492,7 @@ SELECT pg_catalog.setval('public.items_id_seq', 1, false);
 
 
 --
--- TOC entry 4994 (class 0 OID 0)
+-- TOC entry 5004 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: matches_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -446,7 +501,7 @@ SELECT pg_catalog.setval('public.matches_id_seq', 1, false);
 
 
 --
--- TOC entry 4995 (class 0 OID 0)
+-- TOC entry 5005 (class 0 OID 0)
 -- Dependencies: 228
 -- Name: pending_reward_choices_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -455,16 +510,25 @@ SELECT pg_catalog.setval('public.pending_reward_choices_id_seq', 1, false);
 
 
 --
--- TOC entry 4996 (class 0 OID 0)
+-- TOC entry 5006 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: players_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.players_id_seq', 5, true);
+SELECT pg_catalog.setval('public.players_id_seq', 1, false);
 
 
 --
--- TOC entry 4804 (class 2606 OID 16809)
+-- TOC entry 4819 (class 2606 OID 17111)
+-- Name: enemies enemies_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.enemies
+    ADD CONSTRAINT enemies_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4809 (class 2606 OID 16809)
 -- Name: items items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -473,7 +537,7 @@ ALTER TABLE ONLY public.items
 
 
 --
--- TOC entry 4808 (class 2606 OID 16881)
+-- TOC entry 4813 (class 2606 OID 16881)
 -- Name: matches matches_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -482,7 +546,7 @@ ALTER TABLE ONLY public.matches
 
 
 --
--- TOC entry 4810 (class 2606 OID 16924)
+-- TOC entry 4815 (class 2606 OID 16924)
 -- Name: pending_reward_choices pending_reward_choices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -491,7 +555,7 @@ ALTER TABLE ONLY public.pending_reward_choices
 
 
 --
--- TOC entry 4812 (class 2606 OID 16926)
+-- TOC entry 4817 (class 2606 OID 16926)
 -- Name: pending_reward_choices pending_reward_choices_player_id_choice_index_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -500,7 +564,7 @@ ALTER TABLE ONLY public.pending_reward_choices
 
 
 --
--- TOC entry 4806 (class 2606 OID 16845)
+-- TOC entry 4811 (class 2606 OID 16845)
 -- Name: players players_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -509,7 +573,7 @@ ALTER TABLE ONLY public.players
 
 
 --
--- TOC entry 4815 (class 2606 OID 16829)
+-- TOC entry 4822 (class 2606 OID 16829)
 -- Name: accessories accessories_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -518,7 +582,7 @@ ALTER TABLE ONLY public.accessories
 
 
 --
--- TOC entry 4814 (class 2606 OID 16821)
+-- TOC entry 4821 (class 2606 OID 16821)
 -- Name: armours armours_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -527,7 +591,16 @@ ALTER TABLE ONLY public.armours
 
 
 --
--- TOC entry 4821 (class 2606 OID 16882)
+-- TOC entry 4831 (class 2606 OID 17112)
+-- Name: enemies enemies_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.enemies
+    ADD CONSTRAINT enemies_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.matches(id);
+
+
+--
+-- TOC entry 4826 (class 2606 OID 16882)
 -- Name: matches matches_player_1_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -536,7 +609,7 @@ ALTER TABLE ONLY public.matches
 
 
 --
--- TOC entry 4822 (class 2606 OID 16887)
+-- TOC entry 4827 (class 2606 OID 16887)
 -- Name: matches matches_player_2_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -545,7 +618,7 @@ ALTER TABLE ONLY public.matches
 
 
 --
--- TOC entry 4823 (class 2606 OID 16892)
+-- TOC entry 4828 (class 2606 OID 16892)
 -- Name: matches matches_player_3_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -554,7 +627,7 @@ ALTER TABLE ONLY public.matches
 
 
 --
--- TOC entry 4824 (class 2606 OID 16897)
+-- TOC entry 4829 (class 2606 OID 16897)
 -- Name: matches matches_player_4_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -563,7 +636,7 @@ ALTER TABLE ONLY public.matches
 
 
 --
--- TOC entry 4825 (class 2606 OID 16927)
+-- TOC entry 4830 (class 2606 OID 16927)
 -- Name: pending_reward_choices pending_reward_choices_player_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -572,7 +645,7 @@ ALTER TABLE ONLY public.pending_reward_choices
 
 
 --
--- TOC entry 4816 (class 2606 OID 16856)
+-- TOC entry 4823 (class 2606 OID 16856)
 -- Name: players players_acc_slot_1_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -581,25 +654,7 @@ ALTER TABLE ONLY public.players
 
 
 --
--- TOC entry 4817 (class 2606 OID 16861)
--- Name: players players_acc_slot_2_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.players
-    ADD CONSTRAINT players_acc_slot_2_fkey FOREIGN KEY (acc_slot_2) REFERENCES public.items(id);
-
-
---
--- TOC entry 4818 (class 2606 OID 16866)
--- Name: players players_acc_slot_3_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.players
-    ADD CONSTRAINT players_acc_slot_3_fkey FOREIGN KEY (acc_slot_3) REFERENCES public.items(id);
-
-
---
--- TOC entry 4819 (class 2606 OID 16851)
+-- TOC entry 4824 (class 2606 OID 16851)
 -- Name: players players_armour_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -608,7 +663,7 @@ ALTER TABLE ONLY public.players
 
 
 --
--- TOC entry 4820 (class 2606 OID 16846)
+-- TOC entry 4825 (class 2606 OID 16846)
 -- Name: players players_weapon_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -617,7 +672,7 @@ ALTER TABLE ONLY public.players
 
 
 --
--- TOC entry 4813 (class 2606 OID 16813)
+-- TOC entry 4820 (class 2606 OID 16813)
 -- Name: weapons weapons_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -625,11 +680,11 @@ ALTER TABLE ONLY public.weapons
     ADD CONSTRAINT weapons_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.items(id) ON DELETE CASCADE;
 
 
--- Completed on 2026-05-13 23:25:44
+-- Completed on 2026-05-20 22:38:57
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict v5wX5MOTLyvY5ThsIXdMX1KOL7Wn83FiLz6jlVZTdTJy2M7ATmao2uo6yxdGeYD
+\unrestrict P3NooDA8FvddUgmNzm9z6keoFesq6tPvXY8edqWD8PhIMnTNUUMamoOaxvoOqE5
 

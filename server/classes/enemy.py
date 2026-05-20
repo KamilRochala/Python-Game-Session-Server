@@ -42,7 +42,7 @@ class Enemy(BaseModel):
         Returns the actual damage taken.
         """
 
-        actual_damage = incoming_damage - self.armour
+        actual_damage = max(0, incoming_damage - self.armour)
 
         self.current_hp = self.current_hp - actual_damage
 
@@ -62,5 +62,7 @@ class Enemy(BaseModel):
 
     @model_validator(mode='after')
     def validate_stats(self):
-        object.__setattr__(self, 'current_health', self.max_hp)
+        if self.current_hp == 0:
+            object.__setattr__(self, 'current_hp', self.max_hp)
+        return self
     
