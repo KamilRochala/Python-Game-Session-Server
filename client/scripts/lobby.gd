@@ -1,6 +1,8 @@
 extends Control
 
-const BASE_URL = "http://127.0.0.1:8000"
+var BASE_URL: String:
+	get:
+		return GlobalVariables.get_base_url()
 
 # Preloaded placeholder textures (Point these to your temp.png asset path)
 const KNIGHT_SPRITE = preload("res://assets/ui/knight.png")

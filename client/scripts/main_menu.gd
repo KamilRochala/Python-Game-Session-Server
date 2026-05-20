@@ -1,7 +1,9 @@
 extends Control
 
 ## --- Configuration & Preloads ---
-const BASE_URL: String = "http://127.0.0.1:8000"
+var BASE_URL: String:
+	get:
+		return GlobalVariables.get_base_url()
 
 @export var match_card_scene: PackedScene = preload("res://scenes/matchInfo.tscn")
 
@@ -27,7 +29,8 @@ var is_polling: bool = false
 @onready var class_description: Label = %ClassDescription
 @onready var def_label: Label = %DefenceRow/%DefLabel    
 @onready var atk_label: Label = %AttackRow/%AtkLabel      
-@onready var log_message_label: Label = %LogMessageLabel
+@onready var ip_line_edit: LineEdit = %IPLineEdit
+@onready var ip_confirm_btn: Button = %IPConfirmBtn
 
 
 ## --- Lifecycle Methods ---
@@ -41,6 +44,9 @@ func _ready() -> void:
 	%NextClassBtn.pressed.connect(_on_next_class_btn_pressed)
 	%CreateRoom.pressed.connect(_on_create_room_btn_pressed)
 	%NameInput.text_changed.connect(_on_name_input_text_changed)
+	%IPConfirmBtn.pressed.connect(_on_ip_confirm_btn_pressed)
+	
+	ip_line_edit.text = GlobalVariables.server_ip
 	
 	update_ui()
 	
@@ -73,7 +79,13 @@ func update_ui() -> void:
 			if class_description: class_description.text = "Heals for more and wields magic weapons"
 	
 	if name_input and name_input.text.strip_edges() != "":
-		log_message_label.text = ""
+		print("Name input changed: ", name_input.text)
+		
+func _on_ip_confirm_btn_pressed() -> void:
+	var ip = ip_line_edit.text.strip_edges()
+	if ip != "":
+		GlobalVariables.server_ip = ip
+		print("Server IP set to: ", GlobalVariables.server_ip)
 
 
 ## --- Class Swapping Controls ---
@@ -121,11 +133,11 @@ func _on_create_room_btn_pressed() -> void:
 	var player_name := name_input.text.strip_edges()
 	
 	if player_name == "":
-		log_message_label.text = "Your player has no name!!!"
+		print("Your player has no name!!!")
 		return
 	
 	if player_name.length() > 10:
-		log_message_label.text = "Your player name has more than 10 letters!!!"
+		print("Your player name has more than 10 letters!!!")
 		return
 		
 	var chosen_class := classes[current_class_index]
@@ -143,7 +155,7 @@ func _on_create_room_btn_pressed() -> void:
 	var json_body := JSON.stringify(player_payload)
 	var headers := ["Content-Type: application/json"]
 	
-	log_message_label.text = "Creating player profile..."
+	print("Creating player profile...")
 	
 	var dynamic_request := HTTPRequest.new()
 	add_child(dynamic_request)
@@ -163,7 +175,7 @@ func _on_player_created(result: int, response_code: int, headers: PackedStringAr
 			var player_data: Dictionary = json.get_data()
 			var player_id := int(str(player_data.get("id")))
 			
-			log_message_label.text = "Player ready! Entering matchmaking slot..."
+			print("Player ready! Entering matchmaking slot...")
 			GlobalVariables.player_id = player_id
 			
 			# Dynamic request for Match Creation
@@ -177,7 +189,7 @@ func _on_player_created(result: int, response_code: int, headers: PackedStringAr
 			match_create_req.request(BASE_URL + "/createMatch/" + str(player_id), content_headers, HTTPClient.METHOD_POST, "")
 	else:
 		print("Server Validation Error Details: ", response_string)
-		log_message_label.text = "Server Error: " + str(response_code)
+		print("Server Error: " + str(response_code))
 
 
 func _on_match_created(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
@@ -272,4 +284,4 @@ func _update_match_list(matches: Array) -> void:
 func _on_name_input_text_changed(new_text: String) -> void:
 	GlobalVariables.player_name = new_text
 	if new_text.strip_edges() != "" and new_text.length() <= 10:
-		log_message_label.text = ""
+		print("Name valid: ", new_text)

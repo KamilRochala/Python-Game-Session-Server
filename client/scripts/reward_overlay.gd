@@ -1,6 +1,8 @@
 extends PanelContainer
 
-const BASE_URL = "http://127.0.0.1:8000"
+var BASE_URL: String:
+	get:
+		return GlobalVariables.get_base_url()
 
 @onready var choice_1 = %Choice1
 @onready var choice_2 = %Choice2
