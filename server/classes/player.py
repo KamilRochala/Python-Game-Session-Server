@@ -40,8 +40,6 @@ class Player(BaseModel):
     weapon_slot: Weapon | None = None # Allow none in pydantic validation
     armour_slot: Armour | None = None
     accessory_slot_1: Accessory | None = None
-    accessory_slot_2: Accessory | None = None
-    accessory_slot_3: Accessory | None = None
 
     # Validators
 
@@ -115,8 +113,8 @@ class Player(BaseModel):
         health_multipliers = 1.0
         healing_multipliers = 1.0
         
-        # Loop through all accessory slots
-        for accessory_slot in [self.accessory_slot_1, self.accessory_slot_2, self.accessory_slot_3]:
+        # Loop through accessory slot
+        for accessory_slot in [self.accessory_slot_1]:
             if accessory_slot is None:
                 continue
             

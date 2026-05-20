@@ -41,14 +41,14 @@ texture = ExtResource("2_xdvfk")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Enemies" type="HBoxContainer" parent="GridContainer/TextureRect" unique_id=2023652414]
-layout_mode = 0
+[node name="Enemies" type="GridContainer" parent="GridContainer/TextureRect" unique_id=1689968482]
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-size_flags_vertical = 3
-alignment = 1
+columns = 3
 
 [node name="Enemy_1" type="VBoxContainer" parent="GridContainer/TextureRect/Enemies" unique_id=1722532789]
 layout_mode = 2
@@ -194,26 +194,6 @@ custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory1" unique_id=473515211]
-layout_mode = 2
-texture = ExtResource("6_xsx6r")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Accessory2" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=1976629846]
-custom_minimum_size = Vector2(100, 100)
-layout_mode = 2
-
-[node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory2" unique_id=1888677523]
-layout_mode = 2
-texture = ExtResource("6_xsx6r")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Accessory3" type="PanelContainer" parent="GridContainer/ItemsPanel/VBoxContainer/Items" unique_id=145655654]
-custom_minimum_size = Vector2(100, 100)
-layout_mode = 2
-
-[node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory3" unique_id=1452930749]
 layout_mode = 2
 texture = ExtResource("6_xsx6r")
 expand_mode = 1

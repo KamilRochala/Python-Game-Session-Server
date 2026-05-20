@@ -39,7 +39,7 @@ def generate_reward(current_floor: int, is_healer: bool):
             name = random.choice(healer_name)
             item = Weapon(
                 name=f"{random_mod} {name}",
-                sprite_path=f"res://assets/weapons/{name.lower()}.png",
+                sprite_path=f"res://assets/healerWeapons/{name.lower()}.png",
                 floor_multiplier=int(multiplier) if int(multiplier) > 0 else 1,
                 damage=int(random.randint(1, 5) * multiplier),
                 healing_capacity=int(random.randint(5, 12) * multiplier),
@@ -82,7 +82,7 @@ def generate_reward(current_floor: int, is_healer: bool):
         return item, "accessory"
 
 def generate_enemies(current_floor: int, player_name: str):
-    enemy_types = ["Slime", "Gremlin", "Skeleton", "Miner knight", "Rat man", "Wandering angel", "Mudman", "Frog sentiniel", "Lost paladin"]
+    enemy_types = ["Slime", "Gremlin", "Skeleton", "Miner knight", "Rat man", "Wandering angel", "Mudman", "Frog sentiniel"]
     list_of_enemies = []
 
     number_of_enemies = random.randint(1, 5)
@@ -94,7 +94,7 @@ def generate_enemies(current_floor: int, player_name: str):
             max_hp=random.randint(15, 25) * multiplier, 
             damage=random.randint(5,10) * multiplier, 
             armour=int(random.randint(2,4) * multiplier), 
-            name="Trywialne" if player_name == "Trivial" else random.choice(enemy_types)
+            name="Trywialne" if player_name.lower() == "trywialne" else random.choice(enemy_types)
         )
         list_of_enemies.append(temp_enemy)
         
@@ -115,8 +115,16 @@ def advance_turn_system(match_id: int, cur):
     # 2. Build the turn order list of living/valid entities
     # Players first, then enemies
     players = [match["player_1_id"], match["player_2_id"], match["player_3_id"], match["player_4_id"]]
-    active_player_ids = [pid for pid in players if pid is not None]
+    all_player_ids = [pid for pid in players if pid is not None]
     
+    active_player_ids = []
+    if all_player_ids:
+        cur.execute("SELECT id FROM players WHERE id = ANY(%s) AND current_health > 0 ORDER BY id ASC", (all_player_ids,))
+        active_player_ids = [row["id"] for row in cur.fetchall()]
+        
+    if not active_player_ids:
+        return
+        
     enemy_ids = match.get("enemy_ids") or []
     
     # Filter out dead enemies
@@ -346,7 +354,7 @@ def recalculate_player_stats(player_id: int, cur):
     mult_heal = 1.0
     add_def = 0.0
 
-    for acc_id in [p.get("acc_slot_1"), p.get("acc_slot_2"), p.get("acc_slot_3")]:
+    for acc_id in [p.get("acc_slot_1")]:
         if acc_id:
             cur.execute("SELECT stat_to_multiply, stat_multiplier FROM accessories WHERE item_id = %s", (acc_id,))
             acc = cur.fetchone()
@@ -423,8 +431,10 @@ def select_reward(player_id: int, req: SelectionRequest):
                 INSERT INTO accessories (item_id, stat_to_multiply, stat_multiplier)
                 VALUES (%s, %s, %s)
             """, (item_id, choice["stat_to_multiply"], choice["stat_multiplier"]))
-            # Assign to acc_slot_1 by default (could be extended later to manage inventory)
-            cur.execute("UPDATE players SET acc_slot_1 = %s WHERE id = %s", (item_id, player_id))
+            
+            target_slot = "acc_slot_1"
+                
+            cur.execute(f"UPDATE players SET {target_slot} = %s WHERE id = %s", (item_id, player_id))
 
         # Clear pending choices after successful selection
         cur.execute("DELETE FROM pending_reward_choices WHERE player_id = %s", (player_id,))
@@ -710,7 +720,12 @@ def attack_enemy(match_id: int, payload: AttackPayload = Body(...)):
 
         # Reconstruct player list
         players = [match["player_1_id"], match["player_2_id"], match["player_3_id"], match["player_4_id"]]
-        active_player_ids = [pid for pid in players if pid is not None]
+        all_player_ids = [pid for pid in players if pid is not None]
+        
+        active_player_ids = []
+        if all_player_ids:
+            cur.execute("SELECT id FROM players WHERE id = ANY(%s) AND current_health > 0 ORDER BY id ASC", (all_player_ids,))
+            active_player_ids = [row["id"] for row in cur.fetchall()]
         
         enemy_ids = match.get("enemy_ids") or []
         if enemy_ids:
@@ -802,7 +817,12 @@ def heal_player(match_id: int, payload: HealPayload = Body(...)):
             raise HTTPException(status_code=404, detail="Match not found")
 
         players = [match["player_1_id"], match["player_2_id"], match["player_3_id"], match["player_4_id"]]
-        active_player_ids = [pid for pid in players if pid is not None]
+        all_player_ids = [pid for pid in players if pid is not None]
+        
+        active_player_ids = []
+        if all_player_ids:
+            cur.execute("SELECT id FROM players WHERE id = ANY(%s) AND current_health > 0 ORDER BY id ASC", (all_player_ids,))
+            active_player_ids = [row["id"] for row in cur.fetchall()]
         
         enemy_ids = match.get("enemy_ids") or []
         if enemy_ids:

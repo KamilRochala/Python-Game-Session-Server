@@ -80,7 +80,11 @@ func _fetch_player_stats() -> void:
 			if json.parse(body.get_string_from_utf8()) == OK:
 				var p_data = json.get_data()
 				if is_instance_valid(current_hp_label):
-					current_hp_label.text = "Health: " + str(p_data.get("max_health", p_data.get("base_max_health", 0)))
+					var max_hp_val = p_data.get("max_health")
+					if max_hp_val == null:
+						max_hp_val = p_data.get("base_max_health", 0.0)
+					
+					current_hp_label.text = "Health: " + str(max_hp_val)
 					damage_label.text = "Damage: " + str(p_data.get("damage", p_data.get("base_damage", 0)))
 					healing_capacity_label.text = "Healing Capacity: " + str(p_data.get("healing_capacity", p_data.get("base_healing_capacity", 0)))
 					defence_label.text = "Defence: " + str(p_data.get("defence", p_data.get("base_defence", 0)))
@@ -118,6 +122,8 @@ func _poll_match_state() -> void:
 	req.request(BASE_URL + "/getMatch/" + str(GlobalVariables.match_id), ["Content-Type: application/json"], HTTPClient.METHOD_GET)
 
 
+var match_party_healths: Array = [1, 1, 1, 1]
+
 func _process_match_party(match_data: Dictionary) -> void:
 	var slots = ["player_1_id", "player_2_id", "player_3_id", "player_4_id"]
 	for i in range(4):
@@ -128,12 +134,12 @@ func _process_match_party(match_data: Dictionary) -> void:
 			
 		if slot_player_id != null:
 			target_ui_node.visible = true
-			_fetch_and_update_arena_player(int(slot_player_id), target_ui_node)
+			_fetch_and_update_arena_player(int(slot_player_id), target_ui_node, i)
 		else:
 			target_ui_node.visible = false
+			match_party_healths[i] = 0
 
-
-func _fetch_and_update_arena_player(player_id: int, ui_node: VBoxContainer) -> void:
+func _fetch_and_update_arena_player(player_id: int, ui_node: VBoxContainer, index: int) -> void:
 	var req = HTTPRequest.new()
 	add_child(req)
 	req.request_completed.connect(func(res, code, headers, body):
@@ -143,9 +149,23 @@ func _fetch_and_update_arena_player(player_id: int, ui_node: VBoxContainer) -> v
 				var profile = json.get_data()
 				if is_instance_valid(ui_node):
 					var name_str = str(profile.get("player_name", "Unknown"))
-					var max_hp = str(profile.get("max_health", profile.get("base_max_health", "10")))
-					var current_hp = str(profile.get("current_health", max_hp))
+					var max_hp_val = profile.get("max_health")
+					if max_hp_val == null:
+						max_hp_val = profile.get("base_max_health", 10.0)
+					var max_hp = str(max_hp_val)
 					
+					var current_hp_val = profile.get("current_health")
+					if current_hp_val == null:
+						current_hp_val = max_hp_val
+					var current_hp = str(current_hp_val)
+					
+					match_party_healths[index] = float(current_hp_val)
+					
+					if float(current_hp_val) <= 0:
+						ui_node.visible = false
+					else:
+						ui_node.visible = true
+
 					ui_node.get_node("PlayerName").text = name_str
 					ui_node.get_node("Health").text = "HP: " + current_health_format(current_hp) + "/" + max_hp
 					
@@ -159,9 +179,20 @@ func _fetch_and_update_arena_player(player_id: int, ui_node: VBoxContainer) -> v
 					var p_class = str(profile.get("player_class", "")).to_lower()
 					var sprite_node = ui_node.get_node("PlayerSprite")
 					sprite_node.texture = KNIGHT_SPRITE if p_class == "knight" else (CLERIC_SPRITE if p_class == "cleric" else null)
+					
+					_check_party_wipe()
 		req.queue_free()
 	)
 	req.request(BASE_URL + "/player/" + str(player_id), ["Content-Type: application/json"], HTTPClient.METHOD_GET)
+
+func _check_party_wipe() -> void:
+	var total_hp = 0.0
+	for hp in match_party_healths:
+		total_hp += hp
+	
+	if total_hp <= 0:
+		print("All players have 0 HP. Party wiped!")
+		get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 
 func _process_match_enemies(match_data: Dictionary) -> void:
@@ -190,12 +221,12 @@ func _fetch_and_update_arena_enemy(enemy_id: int, ui_node: VBoxContainer) -> voi
 	var req = HTTPRequest.new()
 	add_child(req)
 	req.request_completed.connect(func(res, code, headers, body):
-		if code == 200:
-			var json = JSON.new()
-			if json.parse(body.get_string_from_utf8()) == OK:
-				var enemy_data = json.get_data()
-				
-				if is_instance_valid(ui_node):
+		if is_instance_valid(ui_node):
+			if code == 200:
+				var json = JSON.new()
+				if json.parse(body.get_string_from_utf8()) == OK:
+					var enemy_data = json.get_data()
+					
 					var current_hp : float = 0.0
 					if enemy_data.has("current_hp"):
 						current_hp = float(enemy_data["current_hp"])
@@ -213,7 +244,11 @@ func _fetch_and_update_arena_enemy(enemy_id: int, ui_node: VBoxContainer) -> voi
 						ui_node.get_node("Health").text = enemy_name + " HP: " + str(int(current_hp)) + "/" + str(int(max_hp))
 						
 						var sprite_node = ui_node.get_node("EnemySprite")
-						sprite_node.texture = DEFAULT_ENEMY_SPRITE
+						var enemy_sprite_path = "res://assets/enemies/" + enemy_name + ".png"
+						if ResourceLoader.exists(enemy_sprite_path):
+							sprite_node.texture = load(enemy_sprite_path)
+						else:
+							sprite_node.texture = DEFAULT_ENEMY_SPRITE
 						
 						var attack_btn = ui_node.get_node("AttackBtn")
 						attack_btn.disabled = current_combat_buttons_disabled
@@ -223,11 +258,16 @@ func _fetch_and_update_arena_enemy(enemy_id: int, ui_node: VBoxContainer) -> voi
 						attack_btn.pressed.connect(func():
 							_send_attack_request(enemy_id)
 						)
-						
-					poll_enemy_requests_pending -= 1
-					if poll_enemy_requests_pending == 0:
-						_check_combat_end()
-						
+			else:
+				print("Failed to fetch enemy ", enemy_id, " - HTTP Code: ", code)
+				ui_node.visible = true
+				ui_node.get_node("Health").text = "Unknown Enemy"
+				ui_node.get_node("EnemySprite").texture = DEFAULT_ENEMY_SPRITE
+				
+		poll_enemy_requests_pending -= 1
+		if poll_enemy_requests_pending == 0:
+			_check_combat_end()
+			
 		req.queue_free()
 	)
 	req.request(BASE_URL + "/enemy/" + str(enemy_id), ["Content-Type: application/json"], HTTPClient.METHOD_GET)
@@ -291,8 +331,22 @@ func _synchronize_turn_ui(match_data: Dictionary) -> void:
 	var active_turn_entity_id = combat_order[current_turn_index]
 	var is_player_turn = current_turn_index < active_player_ids.size()
 
+	# Find my index to check my hp
+	var my_index = -1
+	for i in range(active_player_ids.size()):
+		if active_player_ids[i] == GlobalVariables.player_id:
+			my_index = i
+			break
+
+	var am_i_dead = false
+	if my_index != -1 and match_party_healths[my_index] <= 0:
+		am_i_dead = true
+
 	# 2. Check if the entity ID matching the active turn slot belongs to this local client player
-	if is_player_turn and active_turn_entity_id == GlobalVariables.player_id:
+	if am_i_dead:
+		turn_notice_label.text = "You are dead. Watching..."
+		_set_combat_buttons_disabled(true)
+	elif is_player_turn and active_turn_entity_id == GlobalVariables.player_id:
 		turn_notice_label.text = "YOUR TURN! Choose an action."
 		_set_combat_buttons_disabled(false) # Unlock inputs
 	elif is_player_turn:

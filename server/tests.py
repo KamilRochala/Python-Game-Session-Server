@@ -57,8 +57,6 @@ class TestPlayer(unittest.TestCase):
             weapon_slot=self.weapon,
             armour_slot=self.armour,
             accessory_slot_1=self.acc_dmg,
-            accessory_slot_2=self.acc_none,
-            accessory_slot_3=self.acc_none,
         )
 
     def test_valid_player_creation(self):
@@ -82,8 +80,6 @@ class TestPlayer(unittest.TestCase):
                 weapon_slot=self.weapon,
                 armour_slot=self.armour,
                 accessory_slot_1=self.acc_none,
-                accessory_slot_2=self.acc_none,
-                accessory_slot_3=self.acc_none,
             )
 
     def test_damage_with_accessory_multiplier(self):

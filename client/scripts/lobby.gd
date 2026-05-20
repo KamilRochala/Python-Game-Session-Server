@@ -24,6 +24,10 @@ var is_polling: bool = false
 func _ready() -> void:
 	match_title_label.text = "Lobby Room ID: " + str(GlobalVariables.match_id)
 	
+	# Clear all sprites initially
+	for sprite in player_sprites:
+		sprite.texture = null
+	
 	# Keep button turned off by default until verified as the Room Host
 	start_match_btn.disabled = true
 	start_match_btn.pressed.connect(_on_start_match_pressed)

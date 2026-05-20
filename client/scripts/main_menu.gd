@@ -49,6 +49,7 @@ func _ready() -> void:
 	ip_line_edit.text = GlobalVariables.server_ip
 	
 	update_ui()
+	_on_name_input_text_changed(name_input.text) # Initial check for buttons
 	
 	# Polling Setup
 	poll_http_request.request_completed.connect(_on_poll_request_completed)
@@ -283,5 +284,28 @@ func _update_match_list(matches: Array) -> void:
 ## --- Text Input Handlers ---
 func _on_name_input_text_changed(new_text: String) -> void:
 	GlobalVariables.player_name = new_text
-	if new_text.strip_edges() != "" and new_text.length() <= 10:
+	
+	var is_valid = true
+	var stripped = new_text.strip_edges()
+	if stripped == "":
+		is_valid = false
+	elif stripped.length() > 10:
+		is_valid = false
+	else:
+		# Check alphanumeric
+		var regex = RegEx.new()
+		regex.compile("^[a-zA-Z0-9]+$")
+		if regex.search(stripped) == null:
+			is_valid = false
+			
+	# Disable/Enable buttons based on validity
+	%PrevClassBtn.disabled = not is_valid
+	%NextClassBtn.disabled = not is_valid
+	%DefMinusBtn.disabled = not is_valid
+	%DefPlusBtn.disabled = not is_valid
+	%AtkMinusBtn.disabled = not is_valid
+	%AtkPlusBtn.disabled = not is_valid
+	%CreateRoom.disabled = not is_valid
+	
+	if is_valid:
 		print("Name valid: ", new_text)
