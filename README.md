@@ -37,7 +37,14 @@ To host the game server on your machine, follow these steps:
    pip install -r server/requirements.txt
    ```
 
-4. **Run the Server:**
+4. **Setup Database:**
+   You need to import the database structure/data for the server to function correctly.
+   * Open **pgAdmin** (or your preferred PostgreSQL client).
+   * Create a new database for the project (if you haven't already).
+   * Right-click the database and select **Restore...**
+   * Select the `server/TowerClimbBaza` file provided in the repository to import the database schema and data, use plain option of import.
+
+5. **Run the Server:**
    Start the FastAPI server. By setting the host to `0.0.0.0`, everyone on your local network (LAN) will be able to see and connect to your server.
    ```bash
    fastapi dev server/main.py --host 0.0.0.0 --port 8080
