@@ -4,7 +4,10 @@
 [ext_resource type="Texture2D" uid="uid://twx1e1w0qqpo" path="res://assets/ui/fight-background.png" id="2_xdvfk"]
 [ext_resource type="Texture2D" uid="uid://dntix4cc5gadw" path="res://assets/ui/background.png" id="3_7ft05"]
 [ext_resource type="Texture2D" uid="uid://dlhvue0kljgn1" path="res://assets/ui/knight-back.png" id="3_xdvfk"]
+[ext_resource type="Texture2D" uid="uid://btxwbrs0xewf" path="res://assets/placeholders/weapon.png" id="4_ajq0i"]
+[ext_resource type="Texture2D" uid="uid://bs5iwq2q2w3f5" path="res://assets/placeholders/armour.png" id="5_8vbsj"]
 [ext_resource type="Script" uid="uid://b11gb0t0cqofo" path="res://scripts/reward_overlay.gd" id="6_4ag8t"]
+[ext_resource type="Texture2D" uid="uid://dux1uqggejibs" path="res://assets/placeholders/accesory.png" id="6_xsx6r"]
 [ext_resource type="Texture2D" uid="uid://bwk4daaqgoqf2" path="res://assets/accessories/amulet.png" id="7_naajo"]
 [ext_resource type="Texture2D" uid="uid://d38nwgrur71y2" path="res://assets/accessories/necklace.png" id="8_41jku"]
 [ext_resource type="Texture2D" uid="uid://chpuj58mwmabr" path="res://assets/armour/chestplate.png" id="9_k1k1x"]
@@ -172,6 +175,7 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Weapon" unique_id=501860675]
 layout_mode = 2
+texture = ExtResource("4_ajq0i")
 expand_mode = 1
 stretch_mode = 5
 
@@ -181,6 +185,7 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Armour" unique_id=770815031]
 layout_mode = 2
+texture = ExtResource("5_8vbsj")
 expand_mode = 1
 stretch_mode = 5
 
@@ -190,6 +195,7 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory1" unique_id=473515211]
 layout_mode = 2
+texture = ExtResource("6_xsx6r")
 expand_mode = 1
 stretch_mode = 5
 
@@ -199,6 +205,7 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory2" unique_id=1888677523]
 layout_mode = 2
+texture = ExtResource("6_xsx6r")
 expand_mode = 1
 stretch_mode = 5
 
@@ -208,6 +215,7 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="GridContainer/ItemsPanel/VBoxContainer/Items/Accessory3" unique_id=1452930749]
 layout_mode = 2
+texture = ExtResource("6_xsx6r")
 expand_mode = 1
 stretch_mode = 5
 
@@ -441,7 +449,7 @@ layout_mode = 2
 texture = ExtResource("8_41jku")
 expand_mode = 4
 
-[node name="StatsLabel" type="Label" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice2" unique_id=2222222222]
+[node name="StatsLabel" type="Label" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice2" unique_id=-2072745074]
 layout_mode = 2
 text = "Stats"
 horizontal_alignment = 1
@@ -466,7 +474,7 @@ layout_mode = 2
 texture = ExtResource("9_k1k1x")
 expand_mode = 4
 
-[node name="StatsLabel" type="Label" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice3" unique_id=3333333333]
+[node name="StatsLabel" type="Label" parent="RewardOverlay/HBoxContainer/HBoxContainer/Choice3" unique_id=-961633963]
 layout_mode = 2
 text = "Stats"
 horizontal_alignment = 1
