@@ -1,5 +1,9 @@
 import unittest
+from unittest.mock import patch, MagicMock
+from fastapi.testclient import TestClient
 
+# Import models and classes from your app
+from main import app, SelectionRequest, AttackPayload, HealPayload
 from classes.enemy import Enemy
 from classes.item import Item
 from classes.weapon import Weapon, WeaponType
@@ -7,6 +11,13 @@ from classes.player import Player, PlayerClass
 from classes.armour import Armour
 from classes.accessory import Accessory, Stat
 
+
+# Initialize the test client for FastAPI
+client = TestClient(app)
+
+# ---------------------------------------------------------
+# PYDANTIC AND DOMAIN CLASS TESTS
+# ---------------------------------------------------------
 
 class TestPlayer(unittest.TestCase):
 
@@ -199,6 +210,186 @@ class TestWeapon(unittest.TestCase):
             weapon_type=WeaponType.CLERIC,
         )
         self.assertEqual(wand.healing_capacity, 3)
+
+class TestArmour(unittest.TestCase):
+
+    def setUp(self):
+        self.armour = Armour(
+            name="Iron Chest",
+            sprite_path="iron_chest.png",
+            floor_multiplier=1,
+            defence_ammount=5,
+            max_health_increase=20
+        )
+
+    def test_valid_armour_creation(self):
+        self.assertEqual(self.armour.defence_ammount, 5)
+        self.assertEqual(self.armour.max_health_increase, 20)
+
+    def test_defence_must_be_non_negative(self):
+        with self.assertRaises(ValueError):
+            Armour(
+                name="Bad Armour",
+                sprite_path="bad.png",
+                floor_multiplier=1,
+                defence_ammount=-5,
+                max_health_increase=10
+            )
+
+class TestAccessory(unittest.TestCase):
+
+    def test_valid_accessory_creation(self):
+        acc = Accessory(
+            name="Ring of Power",
+            sprite_path="ring.png",
+            floor_multiplier=1,
+            what_stat_is_multiplied=Stat.DAMAGE,
+            stat_multiplier=1.2
+        )
+        self.assertEqual(acc.stat_multiplier, 1.2)
+        self.assertEqual(acc.what_stat_is_multiplied, Stat.DAMAGE)
+
+
+class TestPayloadModels(unittest.TestCase):
+
+    def test_selection_request(self):
+        req = SelectionRequest(selected_index=2)
+        self.assertEqual(req.selected_index, 2)
+        # Assuming you want valid indices to be tested later in endpoints or added as validators in model
+
+    def test_attack_payload(self):
+        payload = AttackPayload(enemy_id=1, damage_amount=15.5)
+        self.assertEqual(payload.enemy_id, 1)
+        self.assertEqual(payload.damage_amount, 15.5)
+
+    def test_heal_payload(self):
+        payload = HealPayload(healer_id=1, target_player_id=2)
+        self.assertEqual(payload.healer_id, 1)
+        self.assertEqual(payload.target_player_id, 2)
+
+
+# ---------------------------------------------------------
+# FASTAPI ENDPOINT MOCK TESTS
+# ---------------------------------------------------------
+
+class TestEndpoints(unittest.TestCase):
+
+    @patch('main.get_db_connection')
+    def test_get_player_success(self, mock_db):
+        # 1. Setup fake database response
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = {
+            "id": 1, 
+            "player_name": "Hero", 
+            "player_class": "Knight",
+            "current_health": 100
+        }
+        # Wire up the mock connection -> cursor
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_db.return_value = mock_conn
+
+        # 2. Make the request to our FastAPI app
+        response = client.get("/player/1")
+
+        # 3. Assert the outcome
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["player_name"], "Hero")
+        self.assertEqual(response.json()["current_health"], 100)
+
+    @patch('main.get_db_connection')
+    def test_get_player_not_found(self, mock_db):
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = None # Database returns nothing
+        
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_db.return_value = mock_conn
+
+        response = client.get("/player/999")
+        
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["detail"], "Player not found")
+
+    @patch('main.get_db_connection')
+    def test_create_match_success(self, mock_db):
+        mock_cursor = MagicMock()
+        # First call checks if player exists. Let's say yes.
+        # Second call checks if player is in active match. Let's say no (returns None)
+        # Third call creates match and returns id.
+        mock_cursor.fetchone.side_effect = [
+            {"1": 1},  # Player exists
+            None,      # Player not in an active match
+            {"id": 42} # Return new match id
+        ]
+        
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_db.return_value = mock_conn
+
+        response = client.post("/createMatch/1")
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], 42)
+        self.assertEqual(response.json()["status"], "waiting")
+        
+    @patch('main.get_db_connection')
+    def test_get_matches(self, mock_db):
+        mock_cursor = MagicMock()
+        # Return a list of waiting matches
+        mock_cursor.fetchall.return_value = [
+            {"id": 1, "status": "waiting", "player_1_id": 1},
+            {"id": 2, "status": "waiting", "player_1_id": 2}
+        ]
+        
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_db.return_value = mock_conn
+
+        response = client.get("/getMatches")
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 2)
+        self.assertEqual(response.json()[0]["id"], 1)
+
+    @patch('main.get_db_connection')
+    def test_attack_enemy_success(self, mock_db):
+        # We need to mock several DB queries to bypass the turn system & enemy checks.
+        mock_cursor = MagicMock()
+        
+        # Side effects for fetchone in order of execution in attackEnemy endpoint:
+        mock_cursor.fetchone.side_effect = [
+            # 1. get match data
+            {"id": 1, "turn_index": 0, "player_1_id": 1, "player_2_id": None, "player_3_id": None, "player_4_id": None, "enemy_ids": [100]},
+            # 2. get enemy data
+            {"id": 100, "name": "Slime", "max_hp": 50, "current_hp": 50, "damage": 5, "armour": 2},
+            # ... subsequent fetchones inside advance_turn_system ...
+            {"id": 1, "turn_index": 1, "player_1_id": 1, "player_2_id": None, "player_3_id": None, "player_4_id": None, "enemy_ids": [100]}
+        ]
+        
+        # Mock fetchall for the active players/enemies check inside get_combat_order
+        mock_cursor.fetchall.side_effect = [
+            [{"id": 1}],     # Active players
+            [{"id": 100}],   # Living enemies
+            [{"id": 1}],     # Active players (for advance_turn_system)
+            [{"id": 100}]    # Living enemies (for advance_turn_system)
+        ]
+
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_db.return_value = mock_conn
+
+        # Payload to attack enemy 100 for 12 damage
+        payload = {"enemy_id": 100, "damage_amount": 12.0}
+        response = client.post("/attackEnemy/1", json=payload)
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["enemy_name"], "Slime")
+        self.assertEqual(data["is_dead"], False)
+        # Enemy has 2 armour, we hit for 12, damage taken should be 10.
+        self.assertEqual(data["actual_damage_taken"], 10)
+
 
 if __name__ == '__main__':
     unittest.main()
